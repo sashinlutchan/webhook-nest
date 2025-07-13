@@ -1,0 +1,46 @@
+# C# WebAPI
+bin/
+obj/
+*.user
+*.suo
+*.cache
+*.log
+
+# React
+node_modules/
+build/
+dist/
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Visual Studio
+.vs/
+*.sln.docstates
+*.userprefs
+*.user
+*.suo
+*.cache
+*.log
+*.tmp
+*.temp
+
+# Rider
+.idea/
+*.sln.iml
+*.csproj.iml
+*.DotSettings
+*.DotSettings.user
+
+# OS
+.DS_Store
+Thumbs.db

@@ -9,8 +9,10 @@ using webhook_nest.main.Infrastructure.Database;
 using webhook_nest.main.Infrastructure.Lambda.LambdaBuilder;
 using webhook_nest.main.Infrastructure.ApiGateway;
 using webhook_nest.main.Infrastructure.RolesAndPolicies;
+using webhook_nest.main.ViewModels;
 using Config = Pulumi.Config;
 using aws = Pulumi.Aws;
+using AwsApiGateway = Pulumi.AwsApiGateway;
 
 return await Deployment.RunAsync(async () =>
 {
@@ -27,7 +29,7 @@ return await Deployment.RunAsync(async () =>
         .CreateTable()
         .Build();
 
-    
+
     var lambdaPath = webhook_nest.main.Infrastructure.Lambda.LambdaPackager.LambdaPackager.BuildAndZipLambda(
         lambdaProjectPath: "../webhook_nest.api/webhook_nest.api.csproj",
         outputFolder: "./bin/lambdas",
@@ -57,39 +59,58 @@ return await Deployment.RunAsync(async () =>
                 { "TABLE_NAME", table.Name },
                 { "REGION", awsRegion }
             }
-    }};
-
-    var CreateWebHook = new Lambda("CreateWebHook", stage,  lambdaPath, lambdaArgs)
-        .Create()
-        .Build();
-
-
-    var GetWebHook =  new Lambda("GetWebHook", stage,  lambdaPath, lambdaArgs)
-        .Create()
-        .Build();
-
-
-    var UpdateWebHook = new Lambda("UpdateWebHook",  stage,  lambdaPath, lambdaArgs)
-        .Create()
-        .Build();
-
-    Function[] lambdas = { CreateWebHook, GetWebHook, UpdateWebHook };
-
-    var lambdaMap = new Dictionary<string, Function>
-    {
-        { "create", CreateWebHook },
-        { "get", GetWebHook },
-        { "update", UpdateWebHook }
+        }
     };
 
-    var apiGateway = new ApiGateway(lambdaMap, stage)
+
+
+
+
+
+
+    List<AwsApiGateway.Inputs.RouteArgs> apis = new List<AwsApiGateway.Inputs.RouteArgs>()
+    {
+        new  AwsApiGateway.Inputs.RouteArgs()
+        {
+
+            Method = AwsApiGateway.Method.POST,
+            EventHandler =     new Lambda("CreateWebHook", stage,  lambdaPath, lambdaArgs)
+                .Create()
+                .Build(),
+            Path =  "/api/v1/webhook/createwebhook"
+        },
+        new  AwsApiGateway.Inputs.RouteArgs()
+        {
+
+            Method = AwsApiGateway.Method.GET,
+            EventHandler =    new Lambda("GetWebHook", stage,  lambdaPath, lambdaArgs)
+                .Create()
+                .Build(),
+            Path = "/api/v1/webhook/getwebhook/{id}"
+        },
+        new  AwsApiGateway.Inputs.RouteArgs()
+        {
+            Method = AwsApiGateway.Method.POST,
+            EventHandler =   new Lambda("UpdateWebHook",  stage,  lambdaPath, lambdaArgs)
+                .Create()
+                .Build(),
+            Path ="/api/v1/webhook/updatewebhook/{id}"
+        },
+    };
+
+
+
+
+
+
+    var apiGateway = new ApiGateway(apis, stage)
         .Create()
         .Build();
 
     return new Dictionary<string, object?>
     {
         ["table"] = table.Id,
-        ["lambdas"]= lambdaMap,
+        ["lambdas"] = apis,
         ["apiUrl"] = apiGateway.ApiUrl
     };
 });

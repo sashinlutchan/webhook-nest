@@ -21,7 +21,7 @@ public class Lambda : ComponentResource
     private Table? dynamoDbTable;
 
     public Lambda(string name, string stage, string lambdaPath, FunctionArgs args)
-        : base("custom:components:Lambda", $"webhooks")
+        : base("custom:components:Lambda", $"webhooks-{name}")
     {
 
         this.name = name;
@@ -44,17 +44,19 @@ public class Lambda : ComponentResource
 
         lambdaFunction = new Function($"{stage}-{name}", new FunctionArgs
         {
-            Runtime = "dotnet8",
-            Handler = "webhook_nest.api::webhook_nest.api.LambdaEntryPoint::FunctionHandlerAsync",
-            Role = role.Arn,
+            Runtime = args.Runtime,
+            Handler = args.Handler,
+            Role = args.Role,
             Code = new FileArchive(this.lambdaPath),
-            Timeout = 30,
+            Timeout = args.Timeout,
+            MemorySize = args.MemorySize,
+            Environment = args.Environment
         });
 
         return this;
     }
 
- 
+
 
     public Function Build()
     {

@@ -1,5 +1,6 @@
 using Amazon.DynamoDBv2.DataModel;
 using System.Text.Json;
+using Newtonsoft.Json.Linq;
 
 namespace webhook_nest.api.Models;
 
@@ -14,14 +15,14 @@ public sealed class Payload
         Url = string.Empty;
     }
 
-    public Payload(string pk, string sk, string url, Dictionary<string, string>? headers = null, string? method = null, object? data = null, long? expiresAt = null)
+    public Payload(string pk, string sk, string url, Dictionary<string, string>? headers = null, string? method = null, Dictionary<string,object>? data = null, long? expiresAt = null)
     {
         Pk = pk;
         Sk = sk;
         Url = url;
         Method = method;
         Headers = headers;
-        Data = data != null ? JsonSerializer.Serialize(data) : null;
+        Data = data;
         ExpiresAt = expiresAt;
     }
 
@@ -41,32 +42,14 @@ public sealed class Payload
     public Dictionary<string, string>? Headers { get; set; }
 
     [DynamoDBProperty]
-    public string? Data { get; set; }
+    public Dictionary<string,object>? Data { get; set; }
 
     [DynamoDBProperty("expiresAt")]
     public long? ExpiresAt { get; set; }
 
-    // Helper method to get data as object
-    public T? GetData<T>()
-    {
-        if (string.IsNullOrEmpty(Data))
-            return default;
 
-        try
-        {
-            return JsonSerializer.Deserialize<T>(Data);
-        }
-        catch
-        {
-            return default;
-        }
-    }
 
     // Helper method to set data as object
-    public void SetData(object data)
-    {
-        Data = data != null ? JsonSerializer.Serialize(data) : null;
-    }
 
     public static Payload format(
         string pk,
@@ -74,7 +57,7 @@ public sealed class Payload
         string url,
         Dictionary<string, string>? headers = null,
         string method = "",
-        object? data = null,
+        Dictionary<string,object>? data = null,
         long? expiresAt = null)
     {
         return new Payload(pk, sk, url, headers, method, data, expiresAt);

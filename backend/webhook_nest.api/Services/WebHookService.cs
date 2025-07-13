@@ -1,4 +1,5 @@
 using System.Runtime.CompilerServices;
+using Newtonsoft.Json.Linq;
 using webhook_nest.api.Interfaces;
 using webhook_nest.api.Models;
 
@@ -25,16 +26,16 @@ public class WebHookService : IWebHook
     public async Task<bool> Save()
     {
         string id = Guid.NewGuid().ToString();
-        var data = Payload.format($"WEBHOOK#{id}", Sk, $"{_baseUrl}/{id}", null, data: new { message = "Webhook created" },
+        var data = Payload.format($"WEBHOOK#{id}", Sk, $"{_baseUrl}/{id}", null, null,
             expiresAt: DateTimeOffset.UtcNow.AddMinutes(15).ToUnixTimeSeconds());
 
         await _hook.SaveAsync(data);
         return true;
     }
 
-    public async Task Update(string id, string method, Dictionary<string, string> headers, object payload)
+    public async Task Update(string id, string method, Dictionary<string, string> headers, Dictionary<string, object> payload)
     {
-        var data = Payload.format($"WEBHOOK#{id}", Sk, null, headers, method, data: payload,
+        var data = Payload.format($"WEBHOOK#{id}", Sk, null, headers, method,payload ,
             expiresAt: null);
 
         await _hook.SaveAsync(data);

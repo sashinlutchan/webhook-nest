@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using webhook_nest.api.Interfaces;
 using System.Text.Json;
+using Newtonsoft.Json.Linq;
 
 namespace webhook_nest.api.Controllers
 {
@@ -39,7 +40,7 @@ namespace webhook_nest.api.Controllers
             var headers = request.Headers
                 .ToDictionary(h => h.Key, h => h.Value.ToString());
 
-            object? payload = null;
+            JObject? payload = null;
 
             if (request.Body.CanRead)
             {
@@ -50,17 +51,17 @@ namespace webhook_nest.api.Controllers
                 {
                     try
                     {
-                        payload = JsonSerializer.Deserialize<object>(body);
+                        payload = JObject.Parse(body);
                     }
                     catch
                     {
-                        // If JSON parsing fails, use the raw string
-                        payload = body;
+                        // If JSON parsing fails, create a simple object with the raw string
+                        payload = new JObject { ["rawData"] = body };
                     }
                 }
             }
 
-            await webhookService.Update(id, method, headers, payload ?? new { });
+            await webhookService.Update(id, method, headers, payload?.ToObject<Dictionary<string, object>>());
             return Ok();
         }
     }

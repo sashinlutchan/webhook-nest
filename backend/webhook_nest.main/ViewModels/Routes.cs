@@ -11,6 +11,7 @@ namespace webhook_nest.main.ViewModels;
 
 public class Routes
 {
+    public string Name { get; set; }
     public string Path { get; set; }
     public AwsApiGateway.Method Method { get; set; }
     public Function EventHandler { get; set; }

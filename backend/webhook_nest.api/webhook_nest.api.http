@@ -1,0 +1,6 @@
+@webhook_nest.api_HostAddress = http://localhost:5129
+
+GET {{webhook_nest.api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

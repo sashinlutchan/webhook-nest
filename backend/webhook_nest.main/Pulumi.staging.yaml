@@ -1,0 +1,4 @@
+encryptionsalt: v1:XgjYWbkDUhs=:v1:sK8D6ssG69pQyaNd:LLJXuVCxTK08Q9fOmTzPqas76m9keA==
+config:
+  app:stage: staging
+  aws:region: af-south-1

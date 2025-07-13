@@ -1,0 +1,7 @@
+name: webhook_nest.main
+runtime: dotnet
+description: webhook_nest
+config:
+  pulumi:tags:
+    value:
+      pulumi:template: aws-csharp

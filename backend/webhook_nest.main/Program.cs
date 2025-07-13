@@ -1,0 +1,95 @@
+﻿using Pulumi;
+using Pulumi.Aws.S3;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using Pulumi.Aws;
+using Pulumi.Aws.Lambda;
+using Pulumi.Aws.Lambda.Inputs;
+using webhook_nest.main.Infrastructure.Database;
+using webhook_nest.main.Infrastructure.Lambda.LambdaBuilder;
+using webhook_nest.main.Infrastructure.ApiGateway;
+using webhook_nest.main.Infrastructure.RolesAndPolicies;
+using Config = Pulumi.Config;
+using aws = Pulumi.Aws;
+
+return await Deployment.RunAsync(async () =>
+{
+    var config = new Config("app");
+
+    var stage = config.Require("stage");
+    var awsConfig = new Pulumi.Config("aws");
+    var awsRegion = awsConfig.Require("region");
+
+    var identity = await aws.GetCallerIdentity.InvokeAsync();
+    var accountId = identity.AccountId;
+
+    var table = new DynamoDB("WebHooks", "expiresAt")
+        .CreateTable()
+        .Build();
+
+    
+    var lambdaPath = webhook_nest.main.Infrastructure.Lambda.LambdaPackager.LambdaPackager.BuildAndZipLambda(
+        lambdaProjectPath: "../webhook_nest.api/webhook_nest.api.csproj",
+        outputFolder: "./bin/lambdas",
+        zipName: "webhook-lambda.zip"
+    );
+
+
+    var lambdaRole = new RolesAndPolicies("lambdaRole", stage)
+        .CreateRole()
+        .AttachPolicies()
+        .AttachDynamoDbAccess(new[] { table })
+        .Build();
+
+
+    var lambdaArgs = new FunctionArgs
+    {
+        Runtime = "dotnet8",
+        Handler = "webhook_nest.api::webhook_nest.api.LambdaEntryPoint::FunctionHandlerAsync",
+        Role = lambdaRole.Arn,
+        Timeout = 60,
+        MemorySize = 512,
+        Environment = new FunctionEnvironmentArgs
+        {
+            Variables =
+            {
+                { "STAGE", stage },
+                { "TABLE_NAME", table.Name },
+                { "REGION", awsRegion }
+            }
+    }};
+
+    var CreateWebHook = new Lambda("CreateWebHook", stage,  lambdaPath, lambdaArgs)
+        .Create()
+        .Build();
+
+
+    var GetWebHook =  new Lambda("GetWebHook", stage,  lambdaPath, lambdaArgs)
+        .Create()
+        .Build();
+
+
+    var UpdateWebHook = new Lambda("UpdateWebHook",  stage,  lambdaPath, lambdaArgs)
+        .Create()
+        .Build();
+
+    Function[] lambdas = { CreateWebHook, GetWebHook, UpdateWebHook };
+
+    var lambdaMap = new Dictionary<string, Function>
+    {
+        { "create", CreateWebHook },
+        { "get", GetWebHook },
+        { "update", UpdateWebHook }
+    };
+
+    var apiGateway = new ApiGateway(lambdaMap, stage)
+        .Create()
+        .Build();
+
+    return new Dictionary<string, object?>
+    {
+        ["table"] = table.Id,
+        ["lambdas"]= lambdaMap,
+        ["apiUrl"] = apiGateway.ApiUrl
+    };
+});

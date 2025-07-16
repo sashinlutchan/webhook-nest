@@ -5,6 +5,7 @@ using Amazon.DynamoDBv2.DocumentModel;
 using webhook_nest.api.Interfaces;
 using webhook_nest.api.Repository;
 using webhook_nest.api.Services;
+using Amazon.Runtime;
 
 namespace webhook_nest.api;
 
@@ -38,9 +39,52 @@ public class Startup
         services.AddEndpointsApiExplorer();
         services.AddSwaggerGen();
 
-        // Add AWS services
-        services.AddSingleton<IAmazonDynamoDB>(_ => new AmazonDynamoDBClient(RegionEndpoint.AFSouth1));
-        services.AddSingleton<IDynamoDBContext, DynamoDBContext>();
+        // Add AWS services with better configuration
+        services.AddSingleton<IAmazonDynamoDB>(provider =>
+        {
+            try
+            {
+                // Get region from environment variable or use default
+                var region = Environment.GetEnvironmentVariable("REGION") ?? "af-south-1";
+                var regionEndpoint = RegionEndpoint.GetBySystemName(region);
+
+                var logger = provider.GetService<ILogger<Startup>>();
+                logger?.LogInformation("Creating DynamoDB client for region: {Region}", region);
+
+                // Try to create the client with explicit region
+                var client = new AmazonDynamoDBClient(regionEndpoint);
+
+                logger?.LogInformation("DynamoDB client created successfully");
+
+                return client;
+            }
+            catch (Exception ex)
+            {
+                var logger = provider.GetService<ILogger<Startup>>();
+                logger?.LogError(ex, "Failed to create DynamoDB client");
+                throw;
+            }
+        });
+
+        services.AddSingleton<IDynamoDBContext>(provider =>
+        {
+            try
+            {
+                var dynamoDbClient = provider.GetRequiredService<IAmazonDynamoDB>();
+                var context = new DynamoDBContext(dynamoDbClient);
+
+                var logger = provider.GetService<ILogger<Startup>>();
+                logger?.LogInformation("DynamoDB context created successfully");
+
+                return context;
+            }
+            catch (Exception ex)
+            {
+                var logger = provider.GetService<ILogger<Startup>>();
+                logger?.LogError(ex, "Failed to create DynamoDB context");
+                throw;
+            }
+        });
 
         // Add application services
         services.AddScoped<IHook, HookRepositoryUsingDynamodb>();
@@ -54,6 +98,32 @@ public class Startup
             app.UseSwagger();
             app.UseSwaggerUI();
         }
+
+        // Add global exception handling middleware
+        app.Use(async (context, next) =>
+        {
+            try
+            {
+                await next();
+            }
+            catch (Exception ex)
+            {
+                var logger = context.RequestServices.GetService<ILogger<Startup>>();
+                logger?.LogError(ex, "Unhandled exception in request pipeline");
+
+                context.Response.StatusCode = 500;
+                context.Response.ContentType = "application/json";
+
+                var errorResponse = new
+                {
+                    error = "Internal server error",
+                    message = ex.Message,
+                    details = env.IsDevelopment() ? ex.ToString() : null
+                };
+
+                await context.Response.WriteAsync(System.Text.Json.JsonSerializer.Serialize(errorResponse));
+            }
+        });
 
         app.UseHttpsRedirection();
         app.UseRouting();

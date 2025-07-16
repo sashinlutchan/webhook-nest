@@ -5,7 +5,7 @@ namespace webhook_nest.api.Interfaces;
 
 public interface IWebHook
 {
-    Task<Payload?> GetByIdAsync(string id);
+    Task<T?> GetByIdAsync<T>(string id);
     Task<bool> Save();
     Task Update(string id, string method, Dictionary<string, string> headers, Dictionary<string, object>? payload);
 }

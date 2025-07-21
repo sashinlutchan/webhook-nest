@@ -90,7 +90,7 @@ return await Deployment.RunAsync(async () =>
         },
         new  AwsApiGateway.Inputs.RouteArgs()
         {
-            Method = AwsApiGateway.Method.POST,
+            Method = AwsApiGateway.Method.ANY,
             EventHandler =   new Lambda("UpdateWebHook",  stage,  lambdaPath, lambdaArgs)
                 .Create()
                 .Build(),

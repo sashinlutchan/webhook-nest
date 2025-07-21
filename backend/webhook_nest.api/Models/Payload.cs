@@ -49,7 +49,6 @@ public sealed class Payload
 
 
 
-    // Helper method to set data as object
 
     public static Payload format(
         string pk,

@@ -31,7 +31,9 @@ public class ApiGateway : ComponentResource
         }, new ComponentResourceOptions
         {
             Parent = this,
-            DependsOn = new List<Pulumi.Resource> { }
+            DependsOn = new List<Pulumi.Resource> { },
+            ReplaceOnChanges = { "*" },
+
         });
 
         return this;

@@ -18,6 +18,12 @@ public class Program
 
     public static IHostBuilder CreateHostBuilder(string[] args) =>
         Host.CreateDefaultBuilder(args)
+            .ConfigureLogging(logging =>
+            {
+                logging.ClearProviders();
+                logging.AddConsole();
+                logging.AddDebug();
+            })
             .ConfigureWebHostDefaults(webBuilder =>
             {
                 webBuilder.UseStartup<Startup>();
@@ -42,8 +48,7 @@ public class Startup
         // Add AWS services with better configuration
         services.AddSingleton<IAmazonDynamoDB>(provider =>
         {
-            try
-            {
+           
                 // Get region from environment variable or use default
                 var region = Environment.GetEnvironmentVariable("REGION") ?? "af-south-1";
                 var regionEndpoint = RegionEndpoint.GetBySystemName(region);
@@ -57,19 +62,12 @@ public class Startup
                 logger?.LogInformation("DynamoDB client created successfully");
 
                 return client;
-            }
-            catch (Exception ex)
-            {
-                var logger = provider.GetService<ILogger<Startup>>();
-                logger?.LogError(ex, "Failed to create DynamoDB client");
-                throw;
-            }
+        
         });
 
         services.AddSingleton<IDynamoDBContext>(provider =>
         {
-            try
-            {
+           
                 var dynamoDbClient = provider.GetRequiredService<IAmazonDynamoDB>();
                 var context = new DynamoDBContext(dynamoDbClient);
 
@@ -77,13 +75,7 @@ public class Startup
                 logger?.LogInformation("DynamoDB context created successfully");
 
                 return context;
-            }
-            catch (Exception ex)
-            {
-                var logger = provider.GetService<ILogger<Startup>>();
-                logger?.LogError(ex, "Failed to create DynamoDB context");
-                throw;
-            }
+         
         });
 
         // Add application services
@@ -124,6 +116,8 @@ public class Startup
                 await context.Response.WriteAsync(System.Text.Json.JsonSerializer.Serialize(errorResponse));
             }
         });
+
+    
 
         app.UseHttpsRedirection();
         app.UseRouting();

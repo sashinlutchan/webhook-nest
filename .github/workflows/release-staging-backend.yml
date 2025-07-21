@@ -36,6 +36,10 @@ jobs:
         run: pulumi login s3://${{ secrets.PULUMI_STATE_BUCKET }}
         working-directory: backend/webhook_nest.main
 
+      - name: Select Pulumi Stack
+        run: pulumi stack select staging
+        working-directory: backend/webhook_nest.main
+
       - name: Deploy with Pulumi
         run: pulumi up --yes
         working-directory: backend/webhook_nest.main

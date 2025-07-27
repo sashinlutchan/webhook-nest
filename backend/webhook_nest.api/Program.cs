@@ -41,41 +41,52 @@ public class Startup
 
     public void ConfigureServices(IServiceCollection services)
     {
-        services.AddControllers();
+        services.AddControllers()
+            .AddNewtonsoftJson(options =>
+            {
+                options.SerializerSettings.NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore;
+                options.SerializerSettings.DefaultValueHandling = Newtonsoft.Json.DefaultValueHandling.Include;
+            });
         services.AddEndpointsApiExplorer();
         services.AddSwaggerGen();
 
-        // Add AWS services with better configuration
+     
+        services.AddCors(options =>
+        {
+            options.AddDefaultPolicy(builder =>
+            {
+                builder
+                    .AllowAnyOrigin()
+                    .AllowAnyMethod()
+                    .AllowAnyHeader();
+            });
+        });
+
+      
         services.AddSingleton<IAmazonDynamoDB>(provider =>
         {
-           
-                // Get region from environment variable or use default
-                var region = Environment.GetEnvironmentVariable("REGION") ?? "af-south-1";
-                var regionEndpoint = RegionEndpoint.GetBySystemName(region);
+            var region = Environment.GetEnvironmentVariable("REGION") ?? "af-south-1";
+            var regionEndpoint = RegionEndpoint.GetBySystemName(region);
 
-                var logger = provider.GetService<ILogger<Startup>>();
-                logger?.LogInformation("Creating DynamoDB client for region: {Region}", region);
+            var logger = provider.GetService<ILogger<Startup>>();
+            logger?.LogInformation("Creating DynamoDB client for region: {Region}", region);
 
-                // Try to create the client with explicit region
-                var client = new AmazonDynamoDBClient(regionEndpoint);
+            var client = new AmazonDynamoDBClient(regionEndpoint);
 
-                logger?.LogInformation("DynamoDB client created successfully");
+            logger?.LogInformation("DynamoDB client created successfully");
 
-                return client;
-        
+            return client;
         });
 
         services.AddSingleton<IDynamoDBContext>(provider =>
         {
-           
-                var dynamoDbClient = provider.GetRequiredService<IAmazonDynamoDB>();
-                var context = new DynamoDBContext(dynamoDbClient);
+            var dynamoDbClient = provider.GetRequiredService<IAmazonDynamoDB>();
+            var context = new DynamoDBContext(dynamoDbClient);
 
-                var logger = provider.GetService<ILogger<Startup>>();
-                logger?.LogInformation("DynamoDB context created successfully");
+            var logger = provider.GetService<ILogger<Startup>>();
+            logger?.LogInformation("DynamoDB context created successfully");
 
-                return context;
-         
+            return context;
         });
 
         // Add application services
@@ -117,7 +128,8 @@ public class Startup
             }
         });
 
-    
+      
+        app.UseCors();
 
         app.UseHttpsRedirection();
         app.UseRouting();

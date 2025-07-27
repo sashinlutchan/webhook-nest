@@ -73,11 +73,12 @@ return await Deployment.RunAsync(async () =>
         new  AwsApiGateway.Inputs.RouteArgs()
         {
 
+
             Method = AwsApiGateway.Method.POST,
             EventHandler =     new Lambda("CreateWebHook", stage,  lambdaPath, lambdaArgs)
                 .Create()
                 .Build(),
-            Path =  "/api/v1/webhook/createwebhook"
+            Path =  "/api/v1/webhook/createwebhook",
         },
         new  AwsApiGateway.Inputs.RouteArgs()
         {
@@ -95,6 +96,15 @@ return await Deployment.RunAsync(async () =>
                 .Create()
                 .Build(),
             Path ="/api/v1/webhook/updatewebhook/{id}"
+        },
+        new  AwsApiGateway.Inputs.RouteArgs()
+        {
+
+            Method = AwsApiGateway.Method.GET,
+            EventHandler =    new Lambda("GetEvents", stage,  lambdaPath, lambdaArgs)
+                .Create()
+                .Build(),
+            Path = "/api/v1/webhook/getwebhook/events/{id}"
         },
     };
 

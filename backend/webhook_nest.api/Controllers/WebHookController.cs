@@ -38,16 +38,32 @@ namespace webhook_nest.api.Controllers
         [HttpGet("getwebhook/{id}")]
         public async Task<IActionResult> Get(string id)
         {
-           // id = "b5bacb99-2fda-4414-b92c-aaffdff7c8ab";
             try
             {
-                JObject result = await webhookService.GetByIdAsync<JObject>(id);
-                return Ok(JsonConvert.SerializeObject(result));
+                var result = await webhookService.GetByIdAsync<object>(id);
+
+                return Ok(result);
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "Error getting webhook with id: {Id}", id);
-                return Problem(JsonConvert.SerializeObject(new { message  = "Error getting webhook with id: " + id, error = ex.Message }));
+                return Problem(JsonConvert.SerializeObject(new { message = "Error getting webhook with id: " + id, error = ex.Message }));
+            }
+        }
+
+        [HttpGet("getwebhook/events/{id}")]
+        public async Task<IActionResult> GetEvents(string id)
+        {
+            try
+            {
+                var result = await webhookService.GetWebhookEvents<object>(id);
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error getting webhook events for id: {Id}", id);
+                return Problem(JsonConvert.SerializeObject(new { message = "Error getting webhook events for id: " + id, error = ex.Message }));
             }
         }
 
@@ -55,17 +71,29 @@ namespace webhook_nest.api.Controllers
         public async Task<IActionResult> Create()
         {
             var result = await webhookService.Save();
-            return result  == true  ? Ok(result) : Problem("Unable to create webhook link");
-         
+
+            if (string.IsNullOrEmpty(result.id))
+            {
+                return BadRequest(new { message = "Unable to create webhook link" });
+            }
+
+            var response = new
+            {
+                id = result.id,
+                url = result.url,
+            };
+
+            return Ok(response);
         }
 
-        
+
+
         [AcceptVerbs("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD")]
         [Route("updatewebhook/{id}")]
         public async Task<IActionResult> Update(string id)
         {
-           
-             
+
+
 
             try
             {
@@ -109,16 +137,15 @@ namespace webhook_nest.api.Controllers
 
                 await webhookService.Update(id, method, headers, payload ?? new Dictionary<string, object>());
 
-
                 return Ok(new { message = "Webhook updated successfully", id = id });
             }
             catch (Exception e)
             {
                 Console.WriteLine(e);
-               return Problem(JsonConvert.SerializeObject(new { message = "Error updating webhook", error = e.Message }));
+                return Problem(JsonConvert.SerializeObject(new { message = "Error updating webhook", error = e.Message }));
             }
-            
-          
+
+
         }
     }
 }

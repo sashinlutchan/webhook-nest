@@ -15,7 +15,7 @@ public sealed class Payload
         Url = string.Empty;
     }
 
-    public Payload(string pk, string sk, string url, Dictionary<string, string>? headers = null, string? method = null, Dictionary<string, object>? data = null, long? expiresAt = null)
+    public Payload(string pk, string sk, string url, Dictionary<string, string>? headers = null, string? method = null, Dictionary<string, object>? data = null, long? expiresAt = null, string? createdAt = null)
     {
         Pk = pk;
         Sk = sk;
@@ -24,6 +24,7 @@ public sealed class Payload
         Headers = headers;
         Data = data;
         ExpiresAt = expiresAt;
+        CreatedAt = createdAt;
     }
 
     [DynamoDBHashKey("pk")]
@@ -47,6 +48,9 @@ public sealed class Payload
     [DynamoDBProperty("expiresAt")]
     public long? ExpiresAt { get; set; }
 
+    [DynamoDBProperty("createdAt")]
+    public string? CreatedAt { get; set; }
+
 
 
 
@@ -57,8 +61,9 @@ public sealed class Payload
         Dictionary<string, string>? headers = null,
         string method = "",
         Dictionary<string, object>? data = null,
-        long? expiresAt = null)
+        long? expiresAt = null,
+        string? createdAt = null)
     {
-        return new Payload(pk, sk, url, headers, method, data, expiresAt);
+        return new Payload(pk, sk, url, headers, method, data, expiresAt, createdAt);
     }
 }

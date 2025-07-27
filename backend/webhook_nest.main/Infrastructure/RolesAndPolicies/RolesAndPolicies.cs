@@ -64,10 +64,22 @@ public class RolesAndPolicies : ComponentResource
             return $"[\"{arnList}\"]";
         });
 
+
+        var gsiArns = tables.Select(t => Output.Format($"{t.Arn}/index/*")).ToArray();
+        var gsiResourceList = Output.All(gsiArns).Apply(gsiArns =>
+        {
+            var arnList = string.Join("\", \"", gsiArns);
+            return $"[\"{arnList}\"]";
+        });
+
         dynamoDbPolicy = new Pulumi.Aws.Iam.RolePolicy($"{stage}-{name}-lambda-dynamodb", new()
         {
             Role = role.Name,
-            Policy = resourceList.Apply(resourceJson => $@"{{
+            Policy = Output.All(resourceList, gsiResourceList).Apply(tuple =>
+            {
+                var tableResources = tuple[0];
+                var gsiResources = tuple[1];
+                return $@"{{
             ""Version"": ""2012-10-17"",
             ""Statement"": [
                 {{
@@ -80,10 +92,19 @@ public class RolesAndPolicies : ComponentResource
                         ""dynamodb:DescribeTable"",
                         ""dynamodb:ListTables""
                     ],
-                    ""Resource"": {resourceJson}
+                    ""Resource"": {tableResources}
+                }},
+                {{
+                    ""Effect"": ""Allow"",
+                    ""Action"": [
+                        ""dynamodb:Query"",
+                        ""dynamodb:GetItem""
+                    ],
+                    ""Resource"": {gsiResources}
                 }}
             ]
-        }}")
+        }}";
+            })
         });
 
         return this;
@@ -91,7 +112,7 @@ public class RolesAndPolicies : ComponentResource
 
     public Pulumi.Aws.Iam.Role Build()
     {
-        return role ??  throw new Exception($"Unable to create role {stage}-{name}  ");
+        return role ?? throw new Exception($"Unable to create role {stage}-{name}  ");
     }
 
 }

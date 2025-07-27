@@ -31,6 +31,16 @@ public class DynamoDB  : ComponentResource
 
             HashKey = "pk",
             RangeKey = "sk",
+            GlobalSecondaryIndexes = new[]
+            {
+                new TableGlobalSecondaryIndexArgs
+                {
+                    Name = "LookUp",
+                    HashKey = "GSI1PK",
+                    RangeKey = "GSI1SK",
+                    ProjectionType = "ALL"
+                }
+            },
 
             Attributes = new[]
             {
@@ -42,6 +52,16 @@ public class DynamoDB  : ComponentResource
                 new TableAttributeArgs
                 {
                     Name = "sk",
+                    Type = "S",
+                },
+                new TableAttributeArgs
+                {
+                    Name = "GSI1PK",
+                    Type = "S",
+                },
+                new TableAttributeArgs
+                {
+                    Name = "GSI1SK",
                     Type = "S",
                 }
             },

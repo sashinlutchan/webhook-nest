@@ -28,107 +28,186 @@ public class HookRepositoryUsingDynamodb : IHook
 
     public async Task SaveAsync(Payload payload)
     {
-      
-            _logger.LogInformation("Saving payload to DynamoDB with pk: {Pk}, sk: {Sk}", payload.Pk, payload.Sk);
 
-            var item = new Dictionary<string, AttributeValue>
+        _logger.LogInformation("Saving payload to DynamoDB with pk: {Pk}, sk: {Sk}", payload.Pk, payload.Sk);
+
+        var item = new Dictionary<string, AttributeValue>
             {
                 { "pk", new AttributeValue { S = payload.Pk } },
-                { "sk", new AttributeValue { S = payload.Sk } }
+                { "sk", new AttributeValue { S = payload.Sk } },
+                { "createdAt", new AttributeValue { S = payload.CreatedAt } }
             };
 
-            // Only add url if it's not null or empty
-            if (!string.IsNullOrEmpty(payload.Url))
-            {
-                item["url"] = new AttributeValue { S = payload.Url };
-            }
 
-            // Only add method if it's not null or empty
-            if (!string.IsNullOrEmpty(payload.Method))
-            {
-                item["method"] = new AttributeValue { S = payload.Method };
-            }
+        if (!string.IsNullOrEmpty(payload.Url))
+        {
+            item["url"] = new AttributeValue { S = payload.Url };
+        }
 
-            // Convert headers to DynamoDB map (store as objects)
-            if (payload.Headers != null && payload.Headers.Any())
-            {
-                var headersMap = new Dictionary<string, AttributeValue>();
-                foreach (var header in payload.Headers)
-                {
-                    if (!string.IsNullOrEmpty(header.Value))
-                    {
-                        headersMap[header.Key] = new AttributeValue { S = header.Value };
-                    }
-                }
-                if (headersMap.Any())
-                {
-                    item["headers"] = new AttributeValue { M = headersMap };
-                }
-            }
 
-            // Convert data to DynamoDB map
-            if (payload.Data != null && payload.Data.Any())
-            {
-                var dataMap = Utils.ConvertToDynamoDBMap(payload.Data);
-                if (dataMap.Any())
-                {
-                    item["data"] = new AttributeValue { M = dataMap };
-                }
-            }
 
-        
-            if (payload.ExpiresAt.HasValue)
-            {
-                item["expiresAt"] = new AttributeValue { N = payload.ExpiresAt.Value.ToString() };
-            }
+        if (payload.ExpiresAt.HasValue)
+        {
+            item["expiresAt"] = new AttributeValue { N = payload.ExpiresAt.Value.ToString() };
+        }
 
-            var request = new PutItemRequest
-            {
-                TableName = _tableName,
-                Item = item
-            };
+        var request = new PutItemRequest
+        {
+            TableName = _tableName,
+            Item = item
+        };
 
-            await _client.PutItemAsync(request);
-            _logger.LogInformation($"Successfully saved payload to DynamoDB Request: {request}", request);
-      
+        await _client.PutItemAsync(request);
+        _logger.LogInformation($"Successfully saved payload to DynamoDB Request: {request}", request);
+
     }
 
-  
+
+    public async Task update(Payload payload)
+    {
+
+        _logger.LogInformation("Saving payload to DynamoDB with pk: {Pk}, sk: {Sk}", payload.Pk, payload.Sk);
+
+        var item = new Dictionary<string, AttributeValue>
+            {
+                { "pk", new AttributeValue { S = payload.Pk } },
+                { "sk", new AttributeValue { S = payload.Sk } },
+                { "GSI1PK", new AttributeValue { S = $"EVENT#{payload.Sk.Split("#")[1]}" } } ,
+                { "GSI1SK", new AttributeValue { S = DateTime.UtcNow.ToString("yyyyMMddHH") } },
+                { "createdAt", new AttributeValue { S = payload.CreatedAt } }
+            };
+
+
+        if (!string.IsNullOrEmpty(payload.Url))
+        {
+            item["url"] = new AttributeValue { S = payload.Url };
+        }
+
+        // Only add method if it's not null or empty
+        if (!string.IsNullOrEmpty(payload.Method))
+        {
+            item["method"] = new AttributeValue { S = payload.Method };
+        }
+
+        // Convert headers to DynamoDB map (store as objects)
+        if (payload.Headers != null && payload.Headers.Any())
+        {
+            var headersMap = new Dictionary<string, AttributeValue>();
+            foreach (var header in payload.Headers)
+            {
+                if (!string.IsNullOrEmpty(header.Value))
+                {
+                    headersMap[header.Key] = new AttributeValue { S = header.Value };
+                }
+            }
+            if (headersMap.Any())
+            {
+                item["headers"] = new AttributeValue { M = headersMap };
+            }
+        }
+
+        // Convert data to DynamoDB map
+        if (payload.Data != null && payload.Data.Any())
+        {
+            var dataMap = Utils.ConvertToDynamoDBMap(payload.Data);
+            if (dataMap.Any())
+            {
+                item["data"] = new AttributeValue { M = dataMap };
+            }
+        }
+
+
+        if (payload.ExpiresAt.HasValue)
+        {
+            item["expiresAt"] = new AttributeValue { N = payload.ExpiresAt.Value.ToString() };
+        }
+
+        var request = new PutItemRequest
+        {
+            TableName = _tableName,
+            Item = item
+        };
+
+        await _client.PutItemAsync(request);
+        _logger.LogInformation($"Successfully saved payload to DynamoDB Request: {request}", request);
+
+    }
+
+
+    public async Task<List<T>> GetWebHooks<T>(string pk)
+    {
+
+
+        var queryRequest = new QueryRequest
+        {
+            TableName = _tableName,
+            IndexName = "LookUp",
+            KeyConditionExpression = "GSI1PK = :webhook AND begins_with(GSI1SK, :date)",
+            ExpressionAttributeValues = new Dictionary<string, AttributeValue>
+            {
+                { ":webhook", new AttributeValue { S =  $"EVENT#{pk}" } },
+                { ":date", new AttributeValue { S =  DateTime.UtcNow.ToString("yyyyMMdd") } }
+            }
+        };
+
+
+
+        var response = await _client.QueryAsync(queryRequest);
+
+        _logger.LogInformation("Found {Count} items from DynamoDB query", response.Items.Count);
+
+        var convertedItems = new List<T>();
+        foreach (var item in response.Items)
+        {
+
+
+            var convertedData = Utils.ConvertFromDynamoDBMap(item);
+
+
+            var json = JsonConvert.SerializeObject(convertedData);
+            var deserializedItem = JsonConvert.DeserializeObject<T>(json);
+
+
+            convertedItems.Add(deserializedItem);
+        }
+
+        return convertedItems;
+    }
 
     public async Task<T?> GetByIdAsync<T>(string pk, string sk)
     {
-        
-            _logger.LogInformation("Loading payload from DynamoDB with pk: {Pk}, sk: {Sk}", pk, sk);
 
-            var request = new GetItemRequest
-            {
-                TableName = _tableName,
-                Key = new Dictionary<string, AttributeValue>
+        _logger.LogInformation("Loading payload from DynamoDB with pk: {Pk}, sk: {Sk}", pk, sk);
+
+        var request = new GetItemRequest
+        {
+            TableName = _tableName,
+            Key = new Dictionary<string, AttributeValue>
                 {
                     { "pk", new AttributeValue { S = pk } },
                     { "sk", new AttributeValue { S = sk } }
                 }
-            };
+        };
 
-            var response = await _client.GetItemAsync(request);
+        var response = await _client.GetItemAsync(request);
 
-            if (response.Item == null || !response.Item.Any())
-            {
-                _logger.LogInformation("No item found for pk: {Pk}, sk: {Sk}", pk, sk);
-                return default(T);
-            }
+        if (response.Item == null || !response.Item.Any())
+        {
+            _logger.LogInformation("No item found for pk: {Pk}, sk: {Sk}", pk, sk);
+            return default(T);
+        }
 
-         
-            var convertedData = Utils.ConvertFromDynamoDBMap(response.Item);
-            _logger.LogInformation("Converted data from DynamoDB: {Data}", JsonConvert.SerializeObject(convertedData));
 
-            // Serialize and deserialize through JSON for generic type conversion
-            var json = JsonConvert.SerializeObject(convertedData);
-            return JsonConvert.DeserializeObject<T>(json);
-     
+        var convertedData = Utils.ConvertFromDynamoDBMap(response.Item);
+        _logger.LogInformation("Converted data from DynamoDB: {Data}", JsonConvert.SerializeObject(convertedData));
+
+        // Serialize and deserialize through JSON for generic type conversion
+        var json = JsonConvert.SerializeObject(convertedData);
+        return JsonConvert.DeserializeObject<T>(json);
+
     }
 
-    
+
 
     public async Task DeleteAsync(string pk, string sk)
     {

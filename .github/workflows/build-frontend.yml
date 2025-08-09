@@ -1,15 +1,16 @@
 name: Build Frontend
 
+
 on:
-  workflow_call:
   push:
-    branches: [develop ]
+    branches: [develop]
     paths:
       - 'frontend/**'
   pull_request:
-    branches: [develop ]
+    branches: [develop]
     paths:
       - 'frontend/**'
+
 
 jobs:
   build-frontend:

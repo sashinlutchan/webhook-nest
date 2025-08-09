@@ -1,11 +1,9 @@
 name: Release Staging Frontend
 
 on:
-  workflow_run:
-    workflows: ["Build Frontend"]
-    types:
-      - completed
-    branches: [develop ]
+  workflow_dispatch:
+  push:
+    branches: [develop]
 
 jobs:
   deploy-frontend:

@@ -1,4 +1,4 @@
-import type { WebhookRequest } from "@/types";
+import type { WebhookRequest } from '@/types';
 
 interface RequestListProps {
   requests: WebhookRequest[];
@@ -15,38 +15,38 @@ export default function RequestList({
 }: RequestListProps) {
   const formatTime = (timestamp: string) => {
     const date = new Date(timestamp);
-    return date.toLocaleTimeString("en-US", {
+    return date.toLocaleTimeString('en-US', {
       hour12: false,
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
     });
   };
 
   const getMethodColor = (method: string) => {
     switch (method.toUpperCase()) {
-      case "GET":
-        return "bg-green-100 text-green-800 border-green-200";
-      case "POST":
-        return "bg-blue-100 text-blue-800 border-blue-200";
-      case "PUT":
-        return "bg-yellow-100 text-yellow-800 border-yellow-200";
-      case "DELETE":
-        return "bg-red-100 text-red-800 border-red-200";
-      case "PATCH":
-        return "bg-purple-100 text-purple-800 border-purple-200";
+      case 'GET':
+        return 'bg-green-100 text-green-800 border-green-200';
+      case 'POST':
+        return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'PUT':
+        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'DELETE':
+        return 'bg-red-100 text-red-800 border-red-200';
+      case 'PATCH':
+        return 'bg-purple-100 text-purple-800 border-purple-200';
       default:
-        return "bg-gray-100 text-gray-800 border-gray-200";
+        return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
 
   const getStatusColor = (statusCode: number) => {
     if (statusCode >= 200 && statusCode < 300) {
-      return "bg-green-100 text-green-800";
+      return 'bg-green-100 text-green-800';
     } else if (statusCode >= 400) {
-      return "bg-red-100 text-red-800";
+      return 'bg-red-100 text-red-800';
     } else {
-      return "bg-gray-100 text-gray-800";
+      return 'bg-gray-100 text-gray-800';
     }
   };
 
@@ -114,20 +114,20 @@ export default function RequestList({
       </div>
 
       <div className="space-y-2">
-        {requests.map((request) => (
+        {requests.map(request => (
           <div
             key={request.id}
             onClick={() => onSelectRequest(request)}
             className={`group bg-white border-2 rounded-lg transition-all duration-200 cursor-pointer hover:shadow-md ${
               selectedRequest?.id === request.id
-                ? "border-green-500 bg-green-50 shadow-sm"
-                : "border-gray-200 hover:border-green-300"
+                ? 'border-green-500 bg-green-50 shadow-sm'
+                : 'border-gray-200 hover:border-green-300'
             }`}
           >
             <div className="p-4">
-              {/* Header */}
+      
               <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center space-x-3">
+                <div className="flex items-center space-x-4">
                   <span
                     className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getMethodColor(
                       request.method
@@ -148,7 +148,7 @@ export default function RequestList({
                 </div>
               </div>
 
-              {/* Request details */}
+      
               <div className="space-y-2">
                 {request.userAgent && (
                   <div className="flex items-center space-x-2 text-sm">
@@ -233,7 +233,7 @@ export default function RequestList({
                       />
                     </svg>
                     <span className="text-gray-500">
-                      {request.body ? "Has body" : "No body"}
+                      {request.data ? 'Has data' : 'No data'}
                     </span>
                   </div>
                 </div>

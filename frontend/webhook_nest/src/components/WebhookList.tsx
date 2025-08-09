@@ -1,4 +1,4 @@
-import type { Webhook } from "@/types";
+import type { Webhook } from '@/types';
 
 interface WebhookListProps {
   webhooks: Webhook[];
@@ -13,20 +13,11 @@ export default function WebhookList({
   onSelectWebhook,
   onDeleteWebhook,
 }: WebhookListProps) {
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-    });
-  };
-
   const copyToClipboard = async (url: string) => {
     try {
       await navigator.clipboard.writeText(url);
-      // You could add a toast notification here
     } catch (err) {
-      console.error("Failed to copy URL:", err);
+      console.error('Failed to copy URL:', err);
     }
   };
 
@@ -68,35 +59,31 @@ export default function WebhookList({
       </div>
 
       <div className="space-y-2 max-h-96 overflow-y-auto">
-        {webhooks.map((webhook) => (
+        {webhooks.map(webhook => (
           <div
             key={webhook.id}
             onClick={() => onSelectWebhook(webhook)}
             className={`group relative bg-white rounded-lg border-2 transition-all duration-200 cursor-pointer hover:shadow-md ${
               selectedWebhook?.id === webhook.id
-                ? "border-blue-500 bg-blue-50 shadow-sm"
-                : "border-gray-200 hover:border-blue-300"
+                ? 'border-blue-500 bg-blue-50 shadow-sm'
+                : 'border-gray-200 hover:border-blue-300'
             }`}
           >
             <div className="p-3">
-              {/* Header */}
+        
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center space-x-2">
-                  <div
-                    className={`w-2 h-2 rounded-full ${
-                      webhook.isActive ? "bg-green-500" : "bg-gray-400"
-                    }`}
-                  ></div>
+                  <div className="w-2 h-2 rounded-full bg-green-500"></div>
                   <h3 className="font-medium text-gray-900 text-sm truncate">
-                    {webhook.name || "Untitled Webhook"}
+                    Webhook {webhook.id}
                   </h3>
                 </div>
                 {onDeleteWebhook && (
                   <button
-                    onClick={(e) => {
+                    onClick={e => {
                       e.stopPropagation();
                       if (
-                        confirm("Are you sure you want to delete this webhook?")
+                        confirm('Are you sure you want to delete this webhook?')
                       ) {
                         onDeleteWebhook(webhook.id);
                       }
@@ -121,14 +108,14 @@ export default function WebhookList({
                 )}
               </div>
 
-              {/* URL - Compact version */}
+
               <div className="mb-2">
                 <div className="flex items-center space-x-1 bg-gray-50 rounded p-2">
                   <code className="flex-1 text-xs font-mono text-gray-700 truncate">
                     {webhook.url}
                   </code>
                   <button
-                    onClick={(e) => {
+                    onClick={e => {
                       e.stopPropagation();
                       copyToClipboard(webhook.url);
                     }}
@@ -152,10 +139,10 @@ export default function WebhookList({
                 </div>
               </div>
 
-              {/* Compact Stats */}
+
               <div className="flex items-center justify-between text-xs text-gray-500">
-                <span>{webhook.requestCount} requests</span>
-                <span>{formatDate(webhook.createdAt)}</span>
+                <span>Active</span>
+                <span>Ready</span>
               </div>
             </div>
 

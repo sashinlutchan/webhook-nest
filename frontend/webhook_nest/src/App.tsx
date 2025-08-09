@@ -1,13 +1,13 @@
-import { useState, useEffect } from "react";
-import { WebhookList, RequestTable, RequestDetails } from "@/components";
-import { 
-  useCreateWebhook, 
+import { useState, useEffect } from 'react';
+import { WebhookList, RequestTable, RequestDetails } from '@/components';
+import {
+  useCreateWebhook,
   useGetWebhook,
-  useGetWebhookEvents
-} from "@/hooks/useWebhooks";
-import { getItem, clear } from "@/utils/localstorage";
-import { webhookApi } from "@/api/WebhooksApi";
-import type { Webhook, WebHookEvents } from "@/types";
+  useGetWebhookEvents,
+} from '@/hooks/useWebhooks';
+import { getItem, clear } from '@/utils/localstorage';
+import { webhookApi } from '@/api/WebhooksApi';
+import type { Webhook } from '@/types';
 
 function App() {
   const [selectedWebhook, setSelectedWebhook] = useState<Webhook | null>(null);
@@ -17,13 +17,15 @@ function App() {
   const [isLoadingStoredWebhook, setIsLoadingStoredWebhook] = useState(true);
 
   const createWebhookMutation = useCreateWebhook();
-  const { data: webhook, isLoading: isLoadingWebhook } = useGetWebhook(selectedWebhook?.id || '');
-  const { data: webhookEvents, isLoading: isLoadingEvents } = useGetWebhookEvents(selectedWebhook?.id || '');
+  const { isLoading: isLoadingWebhook } = useGetWebhook(
+    selectedWebhook?.id || ''
+  );
+  const { data: webhookEvents, isLoading: isLoadingEvents } =
+    useGetWebhookEvents(selectedWebhook?.id || '');
 
   useEffect(() => {
     const loadStoredWebhook = async () => {
       try {
-        debugger;
         const storedWebhookId = getItem<string>('WebhookId');
         if (storedWebhookId) {
           const storedWebhook = await webhookApi.getWebhook(storedWebhookId);
@@ -33,7 +35,7 @@ function App() {
           }
         }
       } catch (error) {
-        console.error("Error loading stored webhook:", error);
+        console.error('Error loading stored webhook:', error);
       } finally {
         setIsLoadingStoredWebhook(false);
       }
@@ -43,7 +45,6 @@ function App() {
   }, []);
 
   const handleCreateWebhook = async () => {
-    debugger;
     try {
       const result = await createWebhookMutation.mutateAsync('New Webhook');
       if (result) {
@@ -55,7 +56,7 @@ function App() {
         setShowError(true);
       }
     } catch (error) {
-      console.error("Error creating webhook:", error);
+      console.error('Error creating webhook:', error);
       setShowError(true);
     }
   };
@@ -151,24 +152,33 @@ function App() {
               <button
                 onClick={handleCreateWebhook}
                 disabled={isCreating}
-                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:from-blue-300 disabled:to-purple-300 text-white font-semibold py-3 px-4 rounded-lg shadow-lg transition-all duration-300 transform hover:scale-105 flex items-center justify-center space-x-2"
+                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:from-blue-300 disabled:to-purple-300 text-white font-semibold py-3 px-4 rounded-lg shadow-lg transition-all duration-300 transform hover:scale-105"
               >
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                  />
-                </svg>
-                <span>{isCreating ? "Creating..." : "Create New Webhook"}</span>
+                {isCreating ? (
+                  <div className="flex items-center justify-center space-x-2">
+                    <div className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full"></div>
+                    <span>Creating...</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center space-x-2">
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                      />
+                    </svg>
+                    <span>Create New Webhook</span>
+                  </div>
+                )}
               </button>
-              
+
               <button
                 onClick={handleClearWebhook}
                 className="w-full bg-gray-500 hover:bg-gray-600 text-white font-semibold py-3 px-4 rounded-lg shadow-lg transition-all duration-300 transform hover:scale-105 flex items-center justify-center space-x-2"
@@ -189,7 +199,7 @@ function App() {
                 <span>Clear Webhook & Data</span>
               </button>
             </div>
-            
+
             {createWebhookMutation.isError && (
               <div className="mt-2 text-sm text-red-600 bg-red-50 p-2 rounded">
                 Failed to create webhook. Please try again.
@@ -206,13 +216,15 @@ function App() {
                     <strong>ID:</strong> {createdWebhook.id}
                   </div>
                   <div className="text-xs text-green-700">
-                    <strong>URL:</strong> 
+                    <strong>URL:</strong>
                     <div className="mt-1 p-2 bg-white border border-green-300 rounded text-xs font-mono break-all">
                       {createdWebhook.url}
                     </div>
                   </div>
                   <button
-                    onClick={() => navigator.clipboard.writeText(createdWebhook.url)}
+                    onClick={() =>
+                      navigator.clipboard.writeText(createdWebhook.url)
+                    }
                     className="mt-2 w-full bg-green-600 hover:bg-green-700 text-white text-xs py-1 px-2 rounded"
                   >
                     Copy URL
@@ -317,8 +329,39 @@ function App() {
               disabled={isCreating}
               className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:from-blue-300 disabled:to-purple-300 text-white font-semibold px-8 py-4 rounded-lg shadow-lg transition-all duration-300 transform hover:scale-105 text-lg"
             >
-              {isCreating ? "Creating..." : "Create Your First Webhook"}
+              <div className="flex items-center justify-center space-x-2">
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                  />
+                </svg>
+                <span>Create Your First Webhook</span>
+              </div>
             </button>
+          </div>
+        </div>
+      )}
+
+      {isCreating && (
+        <div className="fixed inset-0 bg-gray-50 flex items-center justify-center z-30">
+          <div className="text-center max-w-md mx-auto p-8">
+            <div className="w-32 h-32 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full flex items-center justify-center mx-auto mb-8">
+              <div className="animate-spin w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full"></div>
+            </div>
+            <h3 className="text-2xl font-bold text-gray-900 mb-4">
+              Creating Your Webhook
+            </h3>
+            <p className="text-gray-600 text-lg">
+              Please wait while we set up your webhook endpoint...
+            </p>
           </div>
         </div>
       )}
@@ -347,7 +390,8 @@ function App() {
               </h3>
             </div>
             <p className="text-gray-600 mb-6">
-              There was an error creating your webhook. Please try again or check your connection.
+              There was an error creating your webhook. Please try again or
+              check your connection.
             </p>
             <div className="flex space-x-3">
               <button

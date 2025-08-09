@@ -1,0 +1,125 @@
+name: webhook-nest-frontend
+runtime: yaml
+description: Frontend infrastructure for webhook-nest
+config:
+  app:stage:
+    value: ""
+  aws:region:
+    value: ""
+  pulumi:tags:
+    value:
+      pulumi:template: yaml
+      project: webhook-nest-frontend
+
+resources:
+  # S3 Bucket for hosting the React app
+  webhook-nest-bucket:
+    type: aws:s3:Bucket
+    properties:
+      bucket: webhook-nest-frontend-${app:stage}
+      website:
+        indexDocument: index.html
+        errorDocument: index.html
+      forceDestroy: true
+
+  # S3 Bucket Public Access Block Configuration
+  webhook-nest-bucket-public-access-block:
+    type: aws:s3:BucketPublicAccessBlock
+    properties:
+      bucket: ${webhook-nest-bucket.id}
+      blockPublicAcls: true
+      blockPublicPolicy: true
+      ignorePublicAcls: true
+      restrictPublicBuckets: true
+
+  # CloudFront Origin Access Control
+  webhook-nest-oac:
+    type: aws:cloudfront:OriginAccessControl
+    properties:
+      name: webhook-nest-oac-${app:stage}
+      description: Origin Access Control for webhook-nest S3 bucket
+      originAccessControlOriginType: s3
+      signingBehavior: always
+      signingProtocol: sigv4
+
+  # S3 Bucket Policy for CloudFront access
+  webhook-nest-bucket-policy:
+    type: aws:s3:BucketPolicy
+    properties:
+      bucket: ${webhook-nest-bucket.id}
+      policy: |
+        {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Sid": "AllowCloudFrontServicePrincipalReadOnly",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "cloudfront.amazonaws.com"
+              },
+              "Action": "s3:GetObject",
+              "Resource": "${webhook-nest-bucket.arn}/*",
+              "Condition": {
+                "StringEquals": {
+                  "AWS:SourceArn": "${webhook-nest-cloudfront.arn}"
+                }
+              }
+            }
+          ]
+        }
+    options:
+      dependsOn:
+        - ${webhook-nest-cloudfront}
+        - ${webhook-nest-oac}
+
+  # CloudFront Distribution
+  webhook-nest-cloudfront:
+    type: aws:cloudfront:Distribution
+    properties:
+      enabled: true
+      defaultRootObject: index.html
+      origins:
+        - domainName: ${webhook-nest-bucket.bucketRegionalDomainName}
+          originId: S3Origin
+          originAccessControlId: ${webhook-nest-oac.id}
+      defaultCacheBehavior:
+        targetOriginId: S3Origin
+        viewerProtocolPolicy: redirect-to-https
+        allowedMethods:
+          - GET
+          - HEAD
+          - OPTIONS
+        cachedMethods:
+          - GET
+          - HEAD
+        forwardedValues:
+          queryString: false
+          cookies:
+            forward: none
+        minTtl: 0
+        defaultTtl: 3600
+        maxTtl: 86400
+      restrictions:
+        geoRestriction:
+          restrictionType: none
+      viewerCertificate:
+        cloudfrontDefaultCertificate: true
+      customErrorResponses:
+        - errorCode: 404
+          responseCode: 200
+          responsePagePath: /index.html
+        - errorCode: 403
+          responseCode: 200
+          responsePagePath: /index.html
+
+
+
+
+
+outputs:
+  bucketName:
+    value: ${webhook-nest-bucket.id}
+  cloudfrontUrl:
+    value: https://${webhook-nest-cloudfront.domainName}
+  websiteUrl:
+    value: http://${webhook-nest-bucket.websiteEndpoint}

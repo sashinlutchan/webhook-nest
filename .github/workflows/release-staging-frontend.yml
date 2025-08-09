@@ -1,0 +1,85 @@
+name: Release Staging Frontend
+
+on:
+  workflow_run:
+    workflows: ["Build Frontend"]
+    types:
+      - completed
+    branches: [develop ]
+
+jobs:
+  deploy-frontend:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'yarn'
+        cache-dependency-path: frontend/webhook_nest/yarn.lock
+        
+    - name: Install Yarn
+      run: npm install -g yarn
+      
+    - name: Download build artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: frontend-build
+        path: frontend/webhook_nest/dist/
+        
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ secrets.AWS_REGION }}
+        
+    - name: Install Pulumi CLI
+      uses: pulumi/actions@v4
+        
+    - name: Login to Pulumi S3 Backend
+      run: pulumi login s3://${{ secrets.PULUMI_STATE_BUCKET }}
+      working-directory: frontend/webhook_nest
+      env:
+        PULUMI_CONFIG_PASSPHRASE: ""
+        
+    - name: Select Pulumi Stack
+      run: pulumi stack select staging
+      working-directory: frontend/webhook_nest
+      env:
+        PULUMI_CONFIG_PASSPHRASE: ""
+        
+    - name: Refresh Pulumi Stack
+      run: pulumi refresh --yes
+      working-directory: frontend/webhook_nest
+      env:
+        PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+        PULUMI_CONFIG_PASSPHRASE: ""
+        
+    - name: Deploy with Pulumi
+      run: pulumi up --yes
+      working-directory: frontend/webhook_nest
+      env:
+        PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+        PULUMI_CONFIG_PASSPHRASE: ""
+      
+    - name: Clean S3 bucket
+      run: |
+        aws s3 rm s3://webhook-nest-frontend-staging/ --recursive || true
+        
+    - name: Upload built files to S3
+      run: |
+        aws s3 sync frontend/webhook_nest/dist/ s3://webhook-nest-frontend-staging/ --exclude "*.map" --exclude ".DS_Store"
+        
+    - name: Invalidate CloudFront cache
+      run: |
+        DISTRIBUTION_ID=$(aws cloudfront list-distributions --query "DistributionList.Items[?contains(Origins.Items[0].DomainName, 'webhook-nest-frontend-staging')].Id" --output text)
+        aws cloudfront create-invalidation --distribution-id $DISTRIBUTION_ID --paths "/*"
+        
+    - name: Deployment Complete
+      run: echo "Frontend deployment to staging completed successfully!"

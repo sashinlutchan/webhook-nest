@@ -19,7 +19,12 @@ public class WebHookService : IWebHook
     {
         this._hook = hook;
         this._logger = logger;
-        _baseUrl = config["URL"] ?? "http://localhost";
+
+   
+        _baseUrl = Environment.GetEnvironmentVariable("API_GATEWAY_URL")
+                   ?? config["URL"]
+                   ?? "http://localhost";
+
         _logger.LogInformation("WebHookService initialized with base URL: {BaseUrl}", _baseUrl);
     }
 
@@ -31,7 +36,6 @@ public class WebHookService : IWebHook
             _logger.LogInformation("Getting webhook with pk: {Pk}, sk: {Sk}", pk, PreFix);
             T result = await _hook.GetByIdAsync<T>(pk, PreFix);
 
-            // Remove pk and sk properties from the result
             if (result is null) return default(T);
 
             if (typeof(T) != typeof(object)) return default(T);
@@ -139,7 +143,7 @@ public class WebHookService : IWebHook
         var data = Payload.format(
             pk: $"EVENT#{Guid.NewGuid()}",
             sk: $"WEBHOOK#{id}",
-            url: string.Empty, // Use empty string instead of null
+            url: string.Empty,
             headers: headers,
             method: method,
             data: payload,

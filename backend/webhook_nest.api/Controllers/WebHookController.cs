@@ -112,13 +112,13 @@ namespace webhook_nest.api.Controllers
                 {
 
 
-                    // Enable buffering to allow multiple reads
+
                     request.EnableBuffering();
 
                     using var reader = new StreamReader(request.Body, leaveOpen: true);
                     var body = await reader.ReadToEndAsync();
 
-                    // Reset the position for other middleware
+
                     request.Body.Position = 0;
 
                     logger.LogDebug("Request body: {Body}", body);

@@ -57,7 +57,7 @@ public class RolesAndPolicies : ComponentResource
     {
         var arns = tables.Select(t => t.Arn).ToArray();
 
-        // Combine ARNs into a single Output<string[]>
+
         var resourceList = Output.All(arns).Apply(arns =>
         {
             var arnList = string.Join("\", \"", arns);

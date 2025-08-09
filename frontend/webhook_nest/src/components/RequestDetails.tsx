@@ -1,4 +1,4 @@
-import type { Events } from "@/types";
+import type { Events } from '@/types';
 
 interface RequestDetailsProps {
   request: Events | null;
@@ -43,13 +43,13 @@ export default function RequestDetails({ request }: RequestDetailsProps) {
 
   const formatDate = (timestamp: string) => {
     const date = new Date(timestamp);
-    return date.toLocaleString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
+    return date.toLocaleString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
       hour12: false,
     });
   };
@@ -58,7 +58,7 @@ export default function RequestDetails({ request }: RequestDetailsProps) {
     try {
       await navigator.clipboard.writeText(text);
     } catch (err) {
-      console.error("Failed to copy text:", err);
+      console.error('Failed to copy text:', err);
     }
   };
 
@@ -72,28 +72,28 @@ export default function RequestDetails({ request }: RequestDetailsProps) {
 
   const getMethodColor = (method: string) => {
     switch (method.toUpperCase()) {
-      case "GET":
-        return "bg-green-500 text-white";
-      case "POST":
-        return "bg-blue-500 text-white";
-      case "PUT":
-        return "bg-yellow-500 text-white";
-      case "DELETE":
-        return "bg-red-500 text-white";
-      case "PATCH":
-        return "bg-purple-500 text-white";
+      case 'GET':
+        return 'bg-green-500 text-white';
+      case 'POST':
+        return 'bg-blue-500 text-white';
+      case 'PUT':
+        return 'bg-yellow-500 text-white';
+      case 'DELETE':
+        return 'bg-red-500 text-white';
+      case 'PATCH':
+        return 'bg-purple-500 text-white';
       default:
-        return "bg-gray-500 text-white";
+        return 'bg-gray-500 text-white';
     }
   };
 
   const getStatusColor = (statusCode: number) => {
     if (statusCode >= 200 && statusCode < 300) {
-      return "bg-green-500 text-white";
+      return 'bg-green-500 text-white';
     } else if (statusCode >= 400) {
-      return "bg-red-500 text-white";
+      return 'bg-red-500 text-white';
     } else {
-      return "bg-gray-500 text-white";
+      return 'bg-gray-500 text-white';
     }
   };
 
@@ -102,22 +102,24 @@ export default function RequestDetails({ request }: RequestDetailsProps) {
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold text-gray-900">Request Details</h2>
         <span className="text-sm text-gray-500 font-mono">
-          ID: {request.id || "N/A"}
+          ID: {request.id || 'N/A'}
         </span>
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
           <div>
             <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
               Method
             </span>
-            <div
-              className={`inline-flex items-center px-2.5 py-1 rounded-full text-sm font-medium mt-1 ${getMethodColor(
-                request.method
-              )}`}
-            >
-              {request.method}
+            <div className="mt-3">
+              <div
+                className={`inline-flex items-center px-2.5 py-1 rounded-full text-sm font-medium ${getMethodColor(
+                  request.method
+                )}`}
+              >
+                {request.method}
+              </div>
             </div>
           </div>
 
@@ -125,12 +127,14 @@ export default function RequestDetails({ request }: RequestDetailsProps) {
             <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
               Status
             </span>
-            <div
-              className={`inline-flex items-center px-2.5 py-1 rounded-full text-sm font-medium mt-1 ${getStatusColor(
-                request.statusCode || 200
-              )}`}
-            >
-              {request.statusCode || 200}
+            <div className="mt-3">
+              <div
+                className={`inline-flex items-center px-2.5 py-1 rounded-full text-sm font-medium ${getStatusColor(
+                  request.statusCode || 200
+                )}`}
+              >
+                {request.statusCode || 200}
+              </div>
             </div>
           </div>
 
@@ -138,8 +142,8 @@ export default function RequestDetails({ request }: RequestDetailsProps) {
             <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
               Date
             </span>
-            <p className="text-sm text-gray-900 font-mono mt-1">
-              {request.createdAt ? formatDate(request.createdAt) : "N/A"}
+            <p className="text-sm text-gray-900 font-mono mt-2">
+              {request.createdAt ? formatDate(request.createdAt) : 'N/A'}
             </p>
           </div>
         </div>
@@ -180,7 +184,7 @@ export default function RequestDetails({ request }: RequestDetailsProps) {
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-base font-medium text-gray-900">
-            Headers{" "}
+            Headers{' '}
             <span className="text-sm text-gray-500">
               ({Object.keys(request.headers || {}).length})
             </span>

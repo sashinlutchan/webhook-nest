@@ -7,7 +7,7 @@ namespace webhook_nest.api.Models;
 [DynamoDBTable("WebHooks")]
 public sealed class Payload
 {
-    // Parameterless constructor required by DynamoDB
+
     public Payload()
     {
         Pk = string.Empty;

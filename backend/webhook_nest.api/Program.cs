@@ -50,7 +50,7 @@ public class Startup
         services.AddEndpointsApiExplorer();
         services.AddSwaggerGen();
 
-     
+
         services.AddCors(options =>
         {
             options.AddDefaultPolicy(builder =>
@@ -62,7 +62,7 @@ public class Startup
             });
         });
 
-      
+
         services.AddSingleton<IAmazonDynamoDB>(provider =>
         {
             var region = Environment.GetEnvironmentVariable("REGION") ?? "af-south-1";
@@ -89,7 +89,7 @@ public class Startup
             return context;
         });
 
-        // Add application services
+
         services.AddScoped<IHook, HookRepositoryUsingDynamodb>();
         services.AddScoped<IWebHook, WebHookService>();
     }
@@ -102,7 +102,7 @@ public class Startup
             app.UseSwaggerUI();
         }
 
-        // Add global exception handling middleware
+
         app.Use(async (context, next) =>
         {
             try
@@ -128,7 +128,7 @@ public class Startup
             }
         });
 
-      
+
         app.UseCors();
 
         app.UseHttpsRedirection();

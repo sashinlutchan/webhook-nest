@@ -10,25 +10,23 @@ namespace webhook_nest.main.Infrastructure.ApiGateway;
 
 public class ApiGateway : ComponentResource
 {
-    private readonly List<AwsApiGateway.Inputs.RouteArgs> lambdaRoutes;
+    private readonly string AppStage;
     private RestApi restApi = null!;
     private Pulumi.Aws.ApiGateway.Deployment deployment = null!;
     private Stage stage = null!;
-    private string AppStage = null!;
 
     public Output<string> ApiUrl => stage.InvokeUrl;
     public Output<string> Arn => restApi.Arn;
+    public RestApi RestApi => restApi;
 
-    public ApiGateway(List<AwsApiGateway.Inputs.RouteArgs> lambdaRoutes, string stage)
+    public ApiGateway(string stage)
         : base("custom:components:ApiGateway", $"webhook-api")
     {
         this.AppStage = stage;
-        this.lambdaRoutes = lambdaRoutes;
     }
 
     public ApiGateway Create()
     {
-        // Create the REST API
         restApi = new RestApi("webhook-gateway", new RestApiArgs
         {
             Name = "webhook-gateway",
@@ -38,20 +36,59 @@ public class ApiGateway : ComponentResource
             Parent = this
         });
 
-        // Enable CORS by creating an OPTIONS method for each resource
+        var dummyMethod = new Method("dummy-method", new MethodArgs
+        {
+            RestApi = restApi.Id,
+            ResourceId = restApi.RootResourceId,
+            HttpMethod = "GET",
+            Authorization = "NONE"
+        }, new CustomResourceOptions { Parent = this });
+
+        var dummyIntegration = new Integration("dummy-integration", new IntegrationArgs
+        {
+            RestApi = restApi.Id,
+            ResourceId = restApi.RootResourceId,
+            HttpMethod = dummyMethod.HttpMethod,
+            Type = "MOCK",
+            RequestTemplates = new Dictionary<string, string>
+            {
+                { "application/json", "{\"statusCode\": 200}" }
+            }
+        }, new CustomResourceOptions { Parent = this });
+
+        var placeholderDeployment = new Pulumi.Aws.ApiGateway.Deployment("webhook-deployment-placeholder", new DeploymentArgs
+        {
+            RestApi = restApi.Id,
+            Description = $"Placeholder deployment for {AppStage}"
+        }, new CustomResourceOptions
+        {
+            Parent = this,
+            DependsOn = { dummyMethod, dummyIntegration }
+        });
+
+        stage = new Stage("webhook-stage", new StageArgs
+        {
+            RestApi = restApi.Id,
+            Deployment = placeholderDeployment.Id,
+            StageName = AppStage
+        }, new CustomResourceOptions { Parent = this });
+
+        return this;
+    }
+
+    public void AddRoutes(List<AwsApiGateway.Inputs.RouteArgs> lambdaRoutes)
+    {
         var resources = new Dictionary<string, Pulumi.Aws.ApiGateway.Resource>();
         var methods = new Dictionary<string, Method>();
         var integrations = new Dictionary<string, Integration>();
         var permissions = new List<Permission>();
 
-        // Create resources and methods for each route
         foreach (var route in lambdaRoutes)
         {
             var pathParts = route.Path.Split('/', StringSplitOptions.RemoveEmptyEntries);
             var currentPath = "";
             Pulumi.Aws.ApiGateway.Resource parentResource = null!;
 
-            // Create nested resources for path segments
             for (int i = 0; i < pathParts.Length; i++)
             {
                 var part = pathParts[i];
@@ -72,10 +109,8 @@ public class ApiGateway : ComponentResource
                 parentResource = resources[currentPath];
             }
 
-            // Fix: Use the correct resource lookup
             var finalResource = resources[route.Path.StartsWith("/") ? route.Path : "/" + route.Path];
 
-            // Create method for the route
             var methodKey = $"{route.Method}-{route.Path}";
             var methodName = $"method-{route.Method.ToString().ToLower()}-{route.Path.Replace("/", "-").Replace("{", "").Replace("}", "")}";
 
@@ -87,7 +122,6 @@ public class ApiGateway : ComponentResource
                 Authorization = "NONE"
             }, new CustomResourceOptions { Parent = this });
 
-            // Create integration
             var integrationName = $"integration-{route.Method.ToString().ToLower()}-{route.Path.Replace("/", "-").Replace("{", "").Replace("}", "")}";
             integrations[methodKey] = new Integration(integrationName, new IntegrationArgs
             {
@@ -99,7 +133,6 @@ public class ApiGateway : ComponentResource
                 Uri = route.EventHandler.Apply(f => f.InvokeArn)
             }, new CustomResourceOptions { Parent = this });
 
-            // Create method response for main HTTP method with CORS headers
             var methodResponseName = $"method-response-{route.Method.ToString().ToLower()}-{route.Path.Replace("/", "-").Replace("{", "").Replace("}", "")}";
             var methodResponse = new MethodResponse(methodResponseName, new MethodResponseArgs
             {
@@ -116,7 +149,6 @@ public class ApiGateway : ComponentResource
                 }
             }, new CustomResourceOptions { Parent = this });
 
-            // Create integration response for main HTTP method with CORS headers
             var integrationResponseName = $"integration-response-{route.Method.ToString().ToLower()}-{route.Path.Replace("/", "-").Replace("{", "").Replace("}", "")}";
             var integrationResponse = new IntegrationResponse(integrationResponseName, new IntegrationResponseArgs
             {
@@ -131,9 +163,11 @@ public class ApiGateway : ComponentResource
                     { "method.response.header.Access-Control-Allow-Methods", "'GET,POST,PUT,DELETE,OPTIONS'" },
                     { "method.response.header.Access-Control-Allow-Credentials", "'true'" }
                 }
-            }, new CustomResourceOptions { Parent = this });
+            }, new CustomResourceOptions { 
+                Parent = this,
+                DependsOn = { integrations[methodKey] }
+            });
 
-            // Create permission for Lambda to be invoked by API Gateway
             var permissionName = $"permission-{route.Method.ToString().ToLower()}-{route.Path.Replace("/", "-").Replace("{", "").Replace("}", "")}";
             permissions.Add(new Permission(permissionName, new PermissionArgs
             {
@@ -144,7 +178,6 @@ public class ApiGateway : ComponentResource
             }, new CustomResourceOptions { Parent = this }));
         }
 
-        // Create a single OPTIONS method at the root level for CORS
         var rootOptionsMethod = new Method("root-options-method", new MethodArgs
         {
             RestApi = restApi.Id,
@@ -153,7 +186,6 @@ public class ApiGateway : ComponentResource
             Authorization = "NONE"
         }, new CustomResourceOptions { Parent = this });
 
-        // Create CORS integration for root OPTIONS
         var rootCorsIntegration = new Integration("root-cors-integration", new IntegrationArgs
         {
             RestApi = restApi.Id,
@@ -166,7 +198,7 @@ public class ApiGateway : ComponentResource
             }
         }, new CustomResourceOptions { Parent = this });
 
-        // Create method response for root OPTIONS
+
         var rootOptionsResponse = new MethodResponse("root-options-response", new MethodResponseArgs
         {
             RestApi = restApi.Id,
@@ -182,7 +214,7 @@ public class ApiGateway : ComponentResource
             }
         }, new CustomResourceOptions { Parent = this });
 
-        // Create integration response for root OPTIONS
+
         var rootCorsIntegrationResponse = new IntegrationResponse("root-cors-integration-response", new IntegrationResponseArgs
         {
             RestApi = restApi.Id,
@@ -196,33 +228,26 @@ public class ApiGateway : ComponentResource
                 { "method.response.header.Access-Control-Allow-Origin", "'*'" },
                 { "method.response.header.Access-Control-Allow-Credentials", "'true'" }
             }
-        }, new CustomResourceOptions { Parent = this });
+        }, new CustomResourceOptions { 
+            Parent = this,
+            DependsOn = { rootCorsIntegration }
+        });
 
-        // Create deployment
-        var dependsOnResources = methods.Values.Cast<Pulumi.Resource>()
-            .Concat(integrations.Values.Cast<Pulumi.Resource>())
-            .Concat(permissions.Cast<Pulumi.Resource>())
-            .ToArray();
-
+        var allResources = new List<Pulumi.Resource>();
+        allResources.AddRange(methods.Values.Cast<Pulumi.Resource>());
+        allResources.AddRange(integrations.Values.Cast<Pulumi.Resource>());
+        
         deployment = new Pulumi.Aws.ApiGateway.Deployment("webhook-deployment", new DeploymentArgs
         {
             RestApi = restApi.Id,
-            Description = $"Deployment for {AppStage}"
+            Description = $"Deployment for {AppStage} with all routes"
         }, new CustomResourceOptions
         {
             Parent = this,
-            DependsOn = dependsOnResources
+            DependsOn = allResources.ToArray()
         });
 
-        // Create stage
-        stage = new Stage("webhook-stage", new StageArgs
-        {
-            RestApi = restApi.Id,
-            Deployment = deployment.Id,
-            StageName = AppStage
-        }, new CustomResourceOptions { Parent = this });
 
-        return this;
     }
 
     public ApiGateway Build()

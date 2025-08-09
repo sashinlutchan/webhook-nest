@@ -44,9 +44,19 @@ jobs:
         env:
           PULUMI_CONFIG_PASSPHRASE: ""
 
+      - name: Refresh Pulumi Stack
+        run: pulumi refresh --yes
+        working-directory: backend/webhook_nest.main
+        env:
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+          PULUMI_CONFIG_PASSPHRASE: ""
+
       - name: Deploy with Pulumi
         run: pulumi up --yes
         working-directory: backend/webhook_nest.main
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
           PULUMI_CONFIG_PASSPHRASE: ""
+           
+      - name: Deployment Complete
+        run: echo "Backend deployment to staging completed successfully!"

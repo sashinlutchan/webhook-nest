@@ -1,4 +1,4 @@
-import type { Events } from "@/types";
+import type { Events } from '@/types';
 
 interface RequestTableProps {
   requests: Events[];
@@ -14,15 +14,15 @@ export default function RequestTable({
   isLoading = false,
 }: RequestTableProps) {
   const formatCreatedDate = (createdAt: string) => {
-    if (!createdAt) return "N/A";
+    if (!createdAt) return 'N/A';
     try {
       const date = new Date(createdAt);
-      return date.toLocaleString("en-US", {
-        month: "short",
-        day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
+      return date.toLocaleString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
         hour12: false,
       });
     } catch {
@@ -32,34 +32,34 @@ export default function RequestTable({
 
   const getMethodColor = (method: string) => {
     switch (method.toUpperCase()) {
-      case "GET":
-        return "bg-green-100 text-green-800 border-green-200";
-      case "POST":
-        return "bg-blue-100 text-blue-800 border-blue-200";
-      case "PUT":
-        return "bg-yellow-100 text-yellow-800 border-yellow-200";
-      case "DELETE":
-        return "bg-red-100 text-red-800 border-red-200";
-      case "PATCH":
-        return "bg-purple-100 text-purple-800 border-purple-200";
+      case 'GET':
+        return 'bg-green-100 text-green-800 border-green-200';
+      case 'POST':
+        return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'PUT':
+        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'DELETE':
+        return 'bg-red-100 text-red-800 border-red-200';
+      case 'PATCH':
+        return 'bg-purple-100 text-purple-800 border-purple-200';
       default:
-        return "bg-gray-100 text-gray-800 border-gray-200";
+        return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
 
   const getStatusColor = (statusCode: number) => {
     if (statusCode >= 200 && statusCode < 300) {
-      return "bg-green-100 text-green-800";
+      return 'bg-green-100 text-green-800';
     } else if (statusCode >= 400) {
-      return "bg-red-100 text-red-800";
+      return 'bg-red-100 text-red-800';
     } else {
-      return "bg-gray-100 text-gray-800";
+      return 'bg-gray-100 text-gray-800';
     }
   };
 
   const truncateText = (text: string, maxLength: number = 25) => {
     return text.length > maxLength
-      ? text.substring(0, maxLength) + "..."
+      ? text.substring(0, maxLength) + '...'
       : text;
   };
 
@@ -73,7 +73,6 @@ export default function RequestTable({
     }
   };
 
-  // Sort requests by createdAt date (newest first)
   const sortedRequests = [...requests].sort((a, b) => {
     if (!a.createdAt && !b.createdAt) return 0;
     if (!a.createdAt) return 1;
@@ -177,8 +176,8 @@ export default function RequestTable({
                     onClick={() => onSelectRequest(request)}
                     className={`cursor-pointer transition-colors hover:bg-gray-50 ${
                       selectedRequest?.id === request.id
-                        ? "bg-blue-50 border-l-4 border-blue-500"
-                        : ""
+                        ? 'bg-blue-50 border-l-4 border-blue-500'
+                        : ''
                     }`}
                   >
                     <td className="px-3 py-2 whitespace-nowrap">

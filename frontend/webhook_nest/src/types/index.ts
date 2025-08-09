@@ -21,7 +21,7 @@ export interface ApiError {
   details?: any;
 }
 
-export type WebHookEvents = Events[]
+export type WebHookEvents = Events[];
 
 export interface Events {
   id?: string;
@@ -34,5 +34,3 @@ export interface Events {
   data?: any;
   createdAt?: string;
 }
-
-

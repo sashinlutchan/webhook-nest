@@ -1,10 +1,7 @@
-import axios from "axios";
-import type { AxiosInstance, AxiosRequestConfig } from "axios";
-import type {
-  Webhook,
-  WebHookEvents,
-} from "@/types";
-import { getEnvOrNull } from "@/utils/env";
+import axios from 'axios';
+import type { AxiosInstance } from 'axios';
+import type { Webhook, WebHookEvents } from '@/types';
+import { getEnvOrNull } from '@/utils/env';
 
 class WebhookApi {
   private apiClient: AxiosInstance;
@@ -14,35 +11,34 @@ class WebhookApi {
       baseURL: getEnvOrNull('VITE_BASE_URL'),
       timeout: 15000,
       headers: {
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
       },
     });
 
     this.apiClient.interceptors.request.use(
-      (config) => {
+      config => {
         return config;
       },
-      (error) => Promise.reject(error)
+      error => Promise.reject(error)
     );
 
     this.apiClient.interceptors.response.use(
-      (response) => response,
-      (error) => {
+      response => response,
+      error => {
         return Promise.reject(error);
       }
     );
   }
 
-  async createWebhook(name: string = ""): Promise<Webhook | null> {
+  async createWebhook(name: string = ''): Promise<Webhook | null> {
     try {
-      debugger;
       const response = await this.apiClient.post<Webhook>(
-        "api/v1/webhook/createwebhook",
+        'api/v1/webhook/createwebhook',
         { name }
       );
-      debugger;
+
       const data = response.data;
-      debugger;
+
       return data;
     } catch (error) {
       return null;
@@ -62,16 +58,15 @@ class WebhookApi {
 
   async getWebhookEvents(id: string): Promise<WebHookEvents> {
     try {
-      debugger;
-      const response = await this.apiClient.get<WebHookEvents>(`api/v1/webhook/getwebhook/events/${id}`);
-      debugger;
+      const response = await this.apiClient.get<WebHookEvents>(
+        `api/v1/webhook/getwebhook/events/${id}`
+      );
+
       return response.data;
     } catch (error) {
-      debugger;
       return [];
     }
   }
 }
 
 export const webhookApi = new WebhookApi();
-

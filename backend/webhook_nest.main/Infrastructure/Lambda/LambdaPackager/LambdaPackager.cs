@@ -12,7 +12,6 @@ public  static class LambdaPackager
     {
         var publishDir = Path.Combine(outputFolder, "publish");
 
-        // Clean + publish
         if (Directory.Exists(publishDir))
             Directory.Delete(publishDir, true);
 
@@ -34,7 +33,6 @@ public  static class LambdaPackager
             throw new Exception($"Lambda publish failed: {err}");
         }
 
-        // Zip
         var zipPath = Path.Combine(outputFolder, zipName);
         if (File.Exists(zipPath)) File.Delete(zipPath);
         System.IO.Compression.ZipFile.CreateFromDirectory(publishDir, zipPath);

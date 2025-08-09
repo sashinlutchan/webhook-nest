@@ -83,13 +83,13 @@ public class HookRepositoryUsingDynamodb : IHook
             item["url"] = new AttributeValue { S = payload.Url };
         }
 
-        // Only add method if it's not null or empty
+
         if (!string.IsNullOrEmpty(payload.Method))
         {
             item["method"] = new AttributeValue { S = payload.Method };
         }
 
-        // Convert headers to DynamoDB map (store as objects)
+
         if (payload.Headers != null && payload.Headers.Any())
         {
             var headersMap = new Dictionary<string, AttributeValue>();
@@ -106,7 +106,6 @@ public class HookRepositoryUsingDynamodb : IHook
             }
         }
 
-        // Convert data to DynamoDB map
         if (payload.Data != null && payload.Data.Any())
         {
             var dataMap = Utils.ConvertToDynamoDBMap(payload.Data);
@@ -201,7 +200,6 @@ public class HookRepositoryUsingDynamodb : IHook
         var convertedData = Utils.ConvertFromDynamoDBMap(response.Item);
         _logger.LogInformation("Converted data from DynamoDB: {Data}", JsonConvert.SerializeObject(convertedData));
 
-        // Serialize and deserialize through JSON for generic type conversion
         var json = JsonConvert.SerializeObject(convertedData);
         return JsonConvert.DeserializeObject<T>(json);
 

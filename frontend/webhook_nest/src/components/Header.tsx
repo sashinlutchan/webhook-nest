@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState } from 'react';
 
 interface HeaderProps {
   onCreateWebhook: () => void;
@@ -6,12 +6,12 @@ interface HeaderProps {
 }
 
 export default function Header({ onCreateWebhook, isCreating }: HeaderProps) {
-  const [webhookName, setWebhookName] = useState("");
+  const [webhookName, setWebhookName] = useState('');
   const [showCreateForm, setShowCreateForm] = useState(false);
 
   const handleCreate = () => {
     onCreateWebhook();
-    setWebhookName("");
+    setWebhookName('');
     setShowCreateForm(false);
   };
 
@@ -52,7 +52,7 @@ export default function Header({ onCreateWebhook, isCreating }: HeaderProps) {
                   type="text"
                   placeholder="Webhook name (optional)"
                   value={webhookName}
-                  onChange={(e) => setWebhookName(e.target.value)}
+                  onChange={e => setWebhookName(e.target.value)}
                   className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 <button
@@ -60,7 +60,7 @@ export default function Header({ onCreateWebhook, isCreating }: HeaderProps) {
                   disabled={isCreating}
                   className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white px-4 py-1 rounded-md text-sm font-medium transition-colors"
                 >
-                  {isCreating ? "Creating..." : "Create"}
+                  {isCreating ? 'Creating...' : 'Create'}
                 </button>
                 <button
                   onClick={() => setShowCreateForm(false)}

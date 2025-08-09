@@ -32,7 +32,6 @@ public class Utils
             }
             else if (kvp.Value is JObject jObject)
             {
-                // Convert JObject to DynamoDB map
                 var jObjectDict = jObject.ToObject<Dictionary<string, object>>();
                 if (jObjectDict != null)
                 {
@@ -45,7 +44,6 @@ public class Utils
             }
             else if (kvp.Value is JArray jArray)
             {
-                // Convert JArray to DynamoDB list
                 var list = new List<AttributeValue>();
                 foreach (var item in jArray)
                 {
@@ -77,7 +75,6 @@ public class Utils
             }
             else
             {
-                // Fallback to string for other types
                 map[kvp.Key] = new AttributeValue { S = kvp.Value.ToString() };
             }
         }

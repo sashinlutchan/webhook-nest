@@ -1,0 +1,43 @@
+name: Build Frontend
+
+on:
+  push:
+    branches: [develop ]
+    paths:
+      - 'frontend/**'
+  pull_request:
+    branches: [develop ]
+    paths:
+      - 'frontend/**'
+
+jobs:
+  build-frontend:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+        cache: 'yarn'
+        cache-dependency-path: frontend/webhook_nest/yarn.lock
+        
+    - name: Install Yarn
+      run: npm install -g yarn
+      
+    - name: Install dependencies
+      working-directory: frontend/webhook_nest
+      run: yarn install --frozen-lockfile
+      
+    - name: Build Vite app
+      working-directory: frontend/webhook_nest
+      run: yarn build
+      
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: frontend-build
+        path: frontend/webhook_nest/dist/

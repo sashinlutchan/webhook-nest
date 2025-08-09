@@ -1,6 +1,7 @@
 name: Build Frontend
 
 on:
+  workflow_call:
   push:
     branches: [develop ]
     paths:

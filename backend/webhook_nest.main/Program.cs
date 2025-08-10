@@ -41,13 +41,12 @@ return await Deployment.RunAsync(async () =>
         .Build();
 
 
-    var apiGateway = new ApiGateway(stage)
+    var allowedOrigins = config.Get("allowedOrigins") ?? "*";
+
+    var apiGateway = new ApiGateway(stage, allowedOrigins)
         .Create()
         .Build();
 
-
-    var allowedOrigins = config.Get("allowedOrigins") ?? "*";
-    
     var lambdaArgs = new FunctionArgs
     {
         Runtime = "dotnet8",
@@ -105,7 +104,7 @@ return await Deployment.RunAsync(async () =>
         },
     };
 
- 
+
     apiGateway.AddRoutes(apis);
 
 

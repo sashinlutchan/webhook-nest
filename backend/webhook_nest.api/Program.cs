@@ -56,21 +56,23 @@ public class Startup
             options.AddDefaultPolicy(builder =>
             {
                 var allowedOrigins = Environment.GetEnvironmentVariable("ALLOWED_ORIGINS") ?? "*";
-                
+
                 if (allowedOrigins == "*")
                 {
-                    builder.AllowAnyOrigin();
+                    builder.AllowAnyOrigin()
+                           .AllowAnyMethod()
+                           .AllowAnyHeader();
                 }
                 else
                 {
                     var origins = allowedOrigins.Split(',', StringSplitOptions.RemoveEmptyEntries)
                                                .Select(o => o.Trim())
                                                .ToArray();
-                    builder.WithOrigins(origins).AllowCredentials();
+                    builder.WithOrigins(origins)
+                           .AllowCredentials()
+                           .AllowAnyMethod()
+                           .AllowAnyHeader();
                 }
-                
-                builder.AllowAnyMethod()
-                       .AllowAnyHeader();
             });
         });
 

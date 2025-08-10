@@ -305,7 +305,7 @@ public class ApiGateway : ComponentResource
         deployment = new Pulumi.Aws.ApiGateway.Deployment("webhook-deployment", new DeploymentArgs
         {
             RestApi = restApi.Id,
-            Description = $"Deployment for {AppStage} with {routeCount} routes and CORS - {deploymentTimestamp}"
+            Description = $"Deployment for {AppStage} Backend with {routeCount} routes and CORS - {deploymentTimestamp}"
         }, new CustomResourceOptions
         {
             Parent = this,

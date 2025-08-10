@@ -68,12 +68,7 @@ public class ApiGateway : ComponentResource
             DependsOn = { dummyMethod, dummyIntegration }
         });
 
-        stage = new Stage("webhook-stage", new StageArgs
-        {
-            RestApi = restApi.Id,
-            Deployment = placeholderDeployment.Id,
-            StageName = AppStage
-        }, new CustomResourceOptions { Parent = this });
+        // Note: Stage will be updated later in AddRoutes() to use the real deployment
 
         return this;
     }
@@ -312,6 +307,14 @@ public class ApiGateway : ComponentResource
             DependsOn = dependsOnResources.ToArray(),
             ReplaceOnChanges = { "*" }
         });
+
+        // Create the stage pointing to the real deployment with all routes and CORS
+        stage = new Stage("webhook-stage", new StageArgs
+        {
+            RestApi = restApi.Id,
+            Deployment = deployment.Id,
+            StageName = AppStage
+        }, new CustomResourceOptions { Parent = this });
     }
 
     public ApiGateway Build()

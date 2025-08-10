@@ -10,7 +10,6 @@ namespace webhook_nest.api.Services;
 public class WebHookService : IWebHook
 {
     private readonly IHook _hook;
-    private readonly string _baseUrl;
     private readonly ILogger<WebHookService> _logger;
     private const string PreFix = "WEBHOOK";
     private static long ExpiryTime => DateTimeOffset.UtcNow.AddHours(1).ToUnixTimeSeconds();
@@ -20,12 +19,7 @@ public class WebHookService : IWebHook
         this._hook = hook;
         this._logger = logger;
 
-   
-        _baseUrl = Environment.GetEnvironmentVariable("API_GATEWAY_URL")
-                   ?? config["URL"]
-                   ?? "http://localhost";
 
-        _logger.LogInformation("WebHookService initialized with base URL: {BaseUrl}", _baseUrl);
     }
 
     public async Task<T> GetByIdAsync<T>(string id)
@@ -55,10 +49,8 @@ public class WebHookService : IWebHook
 
             var response = new
             {
-                id = id,
-                url = dictionary["url"]?.ToString()
+                id = id
             };
-
 
             return (T)(object)response;
         }
@@ -120,15 +112,14 @@ public class WebHookService : IWebHook
         string id = Guid.NewGuid().ToString();
 
 
-        var data = Payload.format($"WEBHOOK#{id}", PreFix, $"{_baseUrl}/{id}", null, null,
-            expiresAt: ExpiryTime,
-            createdAt: DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"));
+        var data = Payload.format($"WEBHOOK#{id}", PreFix,
+    expiresAt: ExpiryTime,
+    createdAt: DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"));
 
         await _hook.SaveAsync(data);
-        _logger.LogInformation("Successfully saved webhook with id: {data}", JsonConvert.SerializeObject(data));
+        _logger.LogInformation("Successfully saved webhook with id: {Id}", id);
 
-
-        return (id, data.Url);
+        return (id, id);
 
 
     }
@@ -143,7 +134,6 @@ public class WebHookService : IWebHook
         var data = Payload.format(
             pk: $"EVENT#{Guid.NewGuid()}",
             sk: $"WEBHOOK#{id}",
-            url: string.Empty,
             headers: headers,
             method: method,
             data: payload,

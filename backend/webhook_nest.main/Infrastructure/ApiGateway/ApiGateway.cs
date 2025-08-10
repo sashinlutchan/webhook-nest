@@ -14,9 +14,10 @@ public class ApiGateway : ComponentResource
     private RestApi restApi = null!;
     private Pulumi.Aws.ApiGateway.Deployment deployment = null!;
     private Stage stage = null!;
+    private Stage finalStage = null!;
     private string AppStage = null!;
 
-    public Output<string> ApiUrl => stage.InvokeUrl;
+    public Output<string> ApiUrl => finalStage?.InvokeUrl ?? stage?.InvokeUrl ?? Output.Create("");
     public Output<string> Arn => restApi.Arn;
     public RestApi RestApi => restApi;
 
@@ -38,37 +39,7 @@ public class ApiGateway : ComponentResource
             Parent = this
         });
 
-        var dummyMethod = new Method("dummy-method", new MethodArgs
-        {
-            RestApi = restApi.Id,
-            ResourceId = restApi.RootResourceId,
-            HttpMethod = "GET",
-            Authorization = "NONE"
-        }, new CustomResourceOptions { Parent = this });
 
-        var dummyIntegration = new Integration("dummy-integration", new IntegrationArgs
-        {
-            RestApi = restApi.Id,
-            ResourceId = restApi.RootResourceId,
-            HttpMethod = dummyMethod.HttpMethod,
-            Type = "MOCK",
-            RequestTemplates = new Dictionary<string, string>
-            {
-                { "application/json", "{\"statusCode\": 200}" }
-            }
-        }, new CustomResourceOptions { Parent = this });
-
-        var placeholderDeployment = new Pulumi.Aws.ApiGateway.Deployment("webhook-deployment-placeholder", new DeploymentArgs
-        {
-            RestApi = restApi.Id,
-            Description = $"Placeholder deployment for {AppStage}"
-        }, new CustomResourceOptions
-        {
-            Parent = this,
-            DependsOn = { dummyMethod, dummyIntegration }
-        });
-
-        // Note: Stage will be updated later in AddRoutes() to use the real deployment
 
         return this;
     }
@@ -164,7 +135,11 @@ public class ApiGateway : ComponentResource
                     { "method.response.header.Access-Control-Allow-Methods", "'GET,POST,PUT,DELETE,OPTIONS'" },
                     { "method.response.header.Access-Control-Allow-Credentials", "'true'" }
                 }
-            }, new CustomResourceOptions { Parent = this });
+            }, new CustomResourceOptions
+            {
+                Parent = this,
+                DependsOn = { integrations[methodKey], methodResponse }
+            });
 
             var permissionName = $"permission-{route.Method.ToString().ToLower()}-{route.Path.Replace("/", "-").Replace("{", "").Replace("}", "")}";
             permissions.Add(new Permission(permissionName, new PermissionArgs
@@ -230,7 +205,11 @@ public class ApiGateway : ComponentResource
                     { "method.response.header.Access-Control-Allow-Origin", $"'{allowedOrigins}'" },
                     { "method.response.header.Access-Control-Allow-Credentials", "'true'" }
                 }
-            }, new CustomResourceOptions { Parent = this });
+            }, new CustomResourceOptions
+            {
+                Parent = this,
+                DependsOn = { corsIntegration, optionsResponse }
+            });
             integrationResponses.Add(corsIntegrationResponse);
         }
 
@@ -308,13 +287,20 @@ public class ApiGateway : ComponentResource
             ReplaceOnChanges = { "*" }
         });
 
-        // Create the stage pointing to the real deployment with all routes and CORS
+
+
         stage = new Stage("webhook-stage", new StageArgs
         {
             RestApi = restApi.Id,
             Deployment = deployment.Id,
             StageName = AppStage
-        }, new CustomResourceOptions { Parent = this });
+        }, new CustomResourceOptions
+        {
+            Parent = this,
+            DependsOn = dependsOnResources.Concat(new Pulumi.Resource[] { deployment }).ToArray()
+        });
+
+        finalStage = stage;
     }
 
     public ApiGateway Build()

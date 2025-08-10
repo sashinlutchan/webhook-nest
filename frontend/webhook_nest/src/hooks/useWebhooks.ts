@@ -4,7 +4,6 @@ import type { Webhook } from '@/types';
 import { setItem } from '@/utils/localstorage';
 
 export function useCreateWebhook() {
-  debugger;
   const queryClient = useQueryClient();
 
   const mutation = useMutation({

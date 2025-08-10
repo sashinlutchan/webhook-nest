@@ -39,10 +39,7 @@ public class HookRepositoryUsingDynamodb : IHook
             };
 
 
-        if (!string.IsNullOrEmpty(payload.Url))
-        {
-            item["url"] = new AttributeValue { S = payload.Url };
-        }
+
 
 
 
@@ -78,10 +75,7 @@ public class HookRepositoryUsingDynamodb : IHook
             };
 
 
-        if (!string.IsNullOrEmpty(payload.Url))
-        {
-            item["url"] = new AttributeValue { S = payload.Url };
-        }
+
 
 
         if (!string.IsNullOrEmpty(payload.Method))

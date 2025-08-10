@@ -79,8 +79,7 @@ namespace webhook_nest.api.Controllers
 
             var response = new
             {
-                id = result.id,
-                url = result.url,
+                id = result.id
             };
 
             return Ok(response);

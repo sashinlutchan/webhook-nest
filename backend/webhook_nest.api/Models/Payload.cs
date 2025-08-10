@@ -12,14 +12,12 @@ public sealed class Payload
     {
         Pk = string.Empty;
         Sk = string.Empty;
-        Url = string.Empty;
     }
 
-    public Payload(string pk, string sk, string url, Dictionary<string, string>? headers = null, string? method = null, Dictionary<string, object>? data = null, long? expiresAt = null, string? createdAt = null)
+    public Payload(string pk, string sk, Dictionary<string, string>? headers = null, string? method = null, Dictionary<string, object>? data = null, long? expiresAt = null, string? createdAt = null)
     {
         Pk = pk;
         Sk = sk;
-        Url = url;
         Method = method;
         Headers = headers;
         Data = data;
@@ -33,8 +31,7 @@ public sealed class Payload
     [DynamoDBRangeKey("sk")]
     public string Sk { get; set; }
 
-    [DynamoDBProperty]
-    public string Url { get; set; }
+
 
     [DynamoDBProperty]
     public string? Method { get; set; }
@@ -57,13 +54,12 @@ public sealed class Payload
     public static Payload format(
         string pk,
         string sk,
-        string url,
         Dictionary<string, string>? headers = null,
         string method = "",
         Dictionary<string, object>? data = null,
         long? expiresAt = null,
         string? createdAt = null)
     {
-        return new Payload(pk, sk, url, headers, method, data, expiresAt, createdAt);
+        return new Payload(pk, sk, headers, method, data, expiresAt, createdAt);
     }
 }

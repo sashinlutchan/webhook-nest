@@ -3,6 +3,15 @@ import type { AxiosInstance } from 'axios';
 import type { Webhook, WebHookEvents } from '@/types';
 import { getEnvOrNull } from '@/utils/env';
 
+type CreateWebhookResponse ={
+  id: string;
+}
+function buildWebhookUrl(id: string): string {
+  const baseUrl = getEnvOrNull('VITE_BASE_URL');
+  const cleanBaseUrl = baseUrl.replace(/\/$/, '');
+  return `${cleanBaseUrl}/api/v1/webhook/updatewebhook/${id}`;
+}
+
 class WebhookApi {
   private apiClient: AxiosInstance;
 
@@ -32,14 +41,17 @@ class WebhookApi {
 
   async createWebhook(name: string = ''): Promise<Webhook | null> {
     try {
-      const response = await this.apiClient.post<Webhook>(
+      const response = await this.apiClient.post<CreateWebhookResponse>(
         'api/v1/webhook/createwebhook',
         { name }
       );
 
       const data = response.data;
 
-      return data;
+      return {
+        id: data.id,
+        url: buildWebhookUrl(data.id)
+      };
     } catch (error) {
       return null;
     }
@@ -47,10 +59,14 @@ class WebhookApi {
 
   async getWebhook(id: string): Promise<Webhook | null> {
     try {
-      const response = await this.apiClient.get<Webhook>(
+      const response = await this.apiClient.get<CreateWebhookResponse>(
         `api/v1/webhook/getwebhook/${id}`
       );
-      return response.data;
+      
+      return {
+        id: response.data.id,
+        url: buildWebhookUrl(response.data.id)
+      };
     } catch (error) {
       return null;
     }

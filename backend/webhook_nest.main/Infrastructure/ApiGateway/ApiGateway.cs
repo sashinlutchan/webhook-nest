@@ -168,6 +168,67 @@ public class ApiGateway : ComponentResource
                 DependsOn = { integrations[methodKey] }
             });
 
+            // Add OPTIONS method for CORS preflight for this specific resource
+            var optionsMethodName = $"method-options-{route.Path.Replace("/", "-").Replace("{", "").Replace("}", "")}";
+            var optionsMethod = new Method(optionsMethodName, new MethodArgs
+            {
+                RestApi = restApi.Id,
+                ResourceId = finalResource.Id,
+                HttpMethod = "OPTIONS",
+                Authorization = "NONE"
+            }, new CustomResourceOptions { Parent = this });
+
+            // Add CORS integration for OPTIONS method
+            var optionsIntegrationName = $"integration-options-{route.Path.Replace("/", "-").Replace("{", "").Replace("}", "")}";
+            var optionsIntegration = new Integration(optionsIntegrationName, new IntegrationArgs
+            {
+                RestApi = restApi.Id,
+                ResourceId = finalResource.Id,
+                HttpMethod = optionsMethod.HttpMethod,
+                Type = "MOCK",
+                RequestTemplates = new Dictionary<string, string>
+                {
+                    { "application/json", "{\"statusCode\": 200}" }
+                }
+            }, new CustomResourceOptions { Parent = this });
+
+            // Add OPTIONS method response
+            var optionsMethodResponseName = $"method-response-options-{route.Path.Replace("/", "-").Replace("{", "").Replace("}", "")}";
+            var optionsMethodResponse = new MethodResponse(optionsMethodResponseName, new MethodResponseArgs
+            {
+                RestApi = restApi.Id,
+                ResourceId = finalResource.Id,
+                HttpMethod = optionsMethod.HttpMethod,
+                StatusCode = "200",
+                ResponseParameters = new Dictionary<string, bool>
+                {
+                    { "method.response.header.Access-Control-Allow-Headers", true },
+                    { "method.response.header.Access-Control-Allow-Methods", true },
+                    { "method.response.header.Access-Control-Allow-Origin", true },
+                    { "method.response.header.Access-Control-Allow-Credentials", true }
+                }
+            }, new CustomResourceOptions { Parent = this });
+
+            // Add OPTIONS integration response
+            var optionsIntegrationResponseName = $"integration-response-options-{route.Path.Replace("/", "-").Replace("{", "").Replace("}", "")}";
+            var optionsIntegrationResponse = new IntegrationResponse(optionsIntegrationResponseName, new IntegrationResponseArgs
+            {
+                RestApi = restApi.Id,
+                ResourceId = finalResource.Id,
+                HttpMethod = optionsMethod.HttpMethod,
+                StatusCode = optionsMethodResponse.StatusCode,
+                ResponseParameters = new Dictionary<string, string>
+                {
+                    { "method.response.header.Access-Control-Allow-Headers", "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'" },
+                    { "method.response.header.Access-Control-Allow-Methods", "'GET,POST,PUT,DELETE,OPTIONS'" },
+                    { "method.response.header.Access-Control-Allow-Origin", "'*'" },
+                    { "method.response.header.Access-Control-Allow-Credentials", "'true'" }
+                }
+            }, new CustomResourceOptions { 
+                Parent = this,
+                DependsOn = { optionsIntegration }
+            });
+
             var permissionName = $"permission-{route.Method.ToString().ToLower()}-{route.Path.Replace("/", "-").Replace("{", "").Replace("}", "")}";
             permissions.Add(new Permission(permissionName, new PermissionArgs
             {

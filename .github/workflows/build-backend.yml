@@ -1,11 +1,11 @@
 name: Build Backend
 
 on:
-  push:
-    branches: [develop]
+  workflow_call:
   pull_request:
     branches: [develop]
-  workflow_call:
+    paths:
+      - 'backend/**'
 
 jobs:
   build:

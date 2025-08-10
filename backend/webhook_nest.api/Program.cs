@@ -55,10 +55,22 @@ public class Startup
         {
             options.AddDefaultPolicy(builder =>
             {
-                builder
-                    .AllowAnyOrigin()
-                    .AllowAnyMethod()
-                    .AllowAnyHeader();
+                var allowedOrigins = Environment.GetEnvironmentVariable("ALLOWED_ORIGINS") ?? "*";
+                
+                if (allowedOrigins == "*")
+                {
+                    builder.AllowAnyOrigin();
+                }
+                else
+                {
+                    var origins = allowedOrigins.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                                               .Select(o => o.Trim())
+                                               .ToArray();
+                    builder.WithOrigins(origins).AllowCredentials();
+                }
+                
+                builder.AllowAnyMethod()
+                       .AllowAnyHeader();
             });
         });
 

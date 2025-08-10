@@ -46,6 +46,8 @@ return await Deployment.RunAsync(async () =>
         .Build();
 
 
+    var allowedOrigins = config.Get("allowedOrigins") ?? "*";
+    
     var lambdaArgs = new FunctionArgs
     {
         Runtime = "dotnet8",
@@ -60,7 +62,8 @@ return await Deployment.RunAsync(async () =>
                 { "STAGE", stage },
                 { "TABLE_NAME", table.Name },
                 { "REGION", awsRegion },
-                { "API_GATEWAY_URL", apiGateway.ApiUrl.Apply(url => $"{url}/api/v1/webhook/updatewebhook") }
+                { "API_GATEWAY_URL", apiGateway.ApiUrl.Apply(url => $"{url}/api/v1/webhook/updatewebhook") },
+                { "ALLOWED_ORIGINS", allowedOrigins }
             }
         }
     };

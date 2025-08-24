@@ -28,3 +28,5 @@ Pulumi.yaml linguist-detectable=false
 **/dist/* linguist-generated=true
 yarn.lock linguist-generated=true
 package-lock.json linguist-generated=true
+# Exclude ALL JavaScript from language detection
+*.js linguist-detectable=false

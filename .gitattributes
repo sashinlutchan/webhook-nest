@@ -1,0 +1,30 @@
+# Language detection overrides for GitHub Linguist
+
+# Backend - C# (.NET)
+backend/**/*.cs linguist-detectable=true linguist-language=C#
+backend/**/*.csproj linguist-detectable=false
+backend/**/*.sln linguist-detectable=false
+backend/**/bin/* linguist-detectable=false
+backend/**/obj/* linguist-detectable=false
+
+# Frontend - TypeScript/React
+frontend/**/*.ts linguist-detectable=true linguist-language=TypeScript
+frontend/**/*.tsx linguist-detectable=true linguist-language=TypeScript
+frontend/**/*.js linguist-detectable=false
+frontend/**/*.json linguist-detectable=false
+frontend/**/node_modules/* linguist-detectable=false
+frontend/**/dist/* linguist-detectable=false
+
+# Documentation and config files
+*.md linguist-documentation=true
+*.yml linguist-detectable=false
+*.yaml linguist-detectable=false
+Pulumi.yaml linguist-detectable=false
+
+# Generated files
+**/bin/* linguist-generated=true
+**/obj/* linguist-generated=true
+**/node_modules/* linguist-vendored=true
+**/dist/* linguist-generated=true
+yarn.lock linguist-generated=true
+package-lock.json linguist-generated=true
